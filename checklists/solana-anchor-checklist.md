@@ -67,6 +67,12 @@ Legend: 🤖 = an automated tool/rule can flag candidates · 👁 = needs human 
   - **Exploit:** Rounding errors accumulating to extract value
   - **Mitigation:** Multiply before divide, use checked math, round in protocol's favor
 
+### Shift Overflow / MSB Truncation 🤖
+- [ ] Are all bit-shift operations verified against actual boundary conditions, not just wrapped in a "checked" function?
+  - **Code smell:** Custom `checked_shl`/`checked_shr` wrappers with hand-rolled masks; trusting "checked" without boundary tests
+  - **Exploit:** Cetus AMM ($223M) — wrong constant in `checked_shlw` mask (`0xff...ff << 192` instead of `1 << 192`) allowed silent MSB truncation in liquidity math
+  - **Mitigation:** Test checked-shift wrappers with `n = threshold`, `n = threshold-1`, `n = threshold+1`; in Rust prefer `checked_shl()` over `wrapping_shl()`; fuzz-test math libraries with extreme inputs
+
 ---
 
 ## Account Lifecycle 👁
