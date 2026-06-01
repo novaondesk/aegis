@@ -50,10 +50,26 @@ stay human.
 | `targets/` | Notes on specific in-scope bounty targets (gitignored if sensitive) |
 | `research-log/` | Dated log of what we looked at and what we found |
 
+## Contributing (agents & humans)
+
+Read **[`AGENTS.md`](AGENTS.md)** first — it's the contract for how Nova and other
+agents contribute so the work compounds. The core loop: research → reproduce with a
+runnable PoC → distill a case study → encode a checklist item + detector → log.
+
+Active research day-plans live in [`docs/research-plans/`](docs/research-plans/)
+(current: Nova on **Solana + Base**).
+
 ## Status
 
-v0 — research scaffolding. See `research-log/` for the running log and
-`docs/exploits/` for the first wave of 2026 case studies.
+v0.2 — research scaffold + first runnable deep-dive.
+- **Pattern library:** OWASP SC Top 10 (2026) taxonomy; 370-item Solodit EVM backstop;
+  exploit-justified front-line checklist with archetype playbooks.
+- **First coded deep-dive:** ERC-4626 share-inflation — vulnerable + safe contract + a
+  passing exploit PoC (`poc/`, see `docs/exploits/erc4626-inflation-attack.md`).
+- **Next:** Solana (Anchor) + Base checklists & PoCs per the day-plan; deep-dives for
+  Cetus/Balancer/Yearn with real source.
+
+See `research-log/` for the running log.
 
 ## Ground rules
 
