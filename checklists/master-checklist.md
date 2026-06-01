@@ -42,6 +42,11 @@ Legend: 🤖 = an automated tool/rule can flag candidates · 👁 = needs human 
       rounding exploit?
 - [ ] Liquidity / invariant math (`x*y=k`, stableswap `D`): any term that can overflow
       intermediate before downcast? *Cetus: liquidity math overflow, ~$223M.*
+- [ ] Bit-shift operations: are "checked" shift wrappers verified with boundary inputs
+      (`n == threshold`, `n == threshold+1`)? Languages where `+`/`*` abort on overflow
+      but `<<` silently truncates (Move, Rust `wrapping_shl`) are especially dangerous.
+      *Cetus: wrong constant in `checked_shlw` mask — `0xff...ff << 192` instead of
+      `1 << 192` — let a ~2^192 intermediate pass undetected.* 🤖
 
 ## SC01 — Access Control 🤖👁
 - [ ] Every privileged function gated (`onlyOwner`/role) — including initializers,
