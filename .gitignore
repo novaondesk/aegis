@@ -1,0 +1,23 @@
+# Pulled target source & reports may contain sensitive / large artifacts
+targets/**/src/
+targets/**/*-report.json
+targets/**/*-report.md
+
+# tool outputs
+slither-report.json
+*.log
+
+# foundry
+out/
+cache/
+broadcast/
+lib/
+
+# python / node tooling
+__pycache__/
+.venv/
+node_modules/
+
+# secrets
+.env
+*.key

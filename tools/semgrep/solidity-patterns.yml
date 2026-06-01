@@ -1,0 +1,72 @@
+rules:
+  # ---------------------------------------------------------------------------
+  # Seed rules. These are STARTING POINTS — high recall, low precision by design.
+  # They surface candidates for the human checklist, not confirmed bugs.
+  # Add one new rule per exploit case study (see docs/exploits/_TEMPLATE.md).
+  # ---------------------------------------------------------------------------
+
+  - id: spot-price-from-pool-reserves
+    languages: [solidity]
+    severity: WARNING
+    message: >
+      Price/value derived from live pool reserves or balanceOf — flash-loan
+      manipulable. Checklist SC03. cf. Inverse Finance ($15.6M).
+    patterns:
+      - pattern-either:
+          - pattern: $POOL.getReserves(...)
+          - pattern: $TOKEN.balanceOf($POOL)
+
+  - id: erc20-transfer-return-unchecked
+    languages: [solidity]
+    severity: WARNING
+    message: >
+      ERC20 transfer/transferFrom return value not checked; non-reverting tokens
+      silently fail. Use SafeERC20. Checklist SC06.
+    patterns:
+      - pattern-either:
+          - pattern: $T.transfer($TO, $AMT);
+          - pattern: $T.transferFrom($FROM, $TO, $AMT);
+
+  - id: external-call-before-state-update
+    languages: [solidity]
+    severity: WARNING
+    message: >
+      Low-level external call — verify Checks-Effects-Interactions (state written
+      BEFORE the call). Checklist SC08. cf. Rari Capital ($80M).
+    patterns:
+      - pattern-either:
+          - pattern: $A.call{value: $V}($D)
+          - pattern: $A.call($D)
+
+  - id: tx-origin-auth
+    languages: [solidity]
+    severity: ERROR
+    message: "tx.origin used in a condition — phishing-vulnerable auth. Checklist SC01."
+    patterns:
+      - pattern: tx.origin
+
+  - id: weak-randomness-source
+    languages: [solidity]
+    severity: WARNING
+    message: >
+      block.timestamp/prevrandao/blockhash used as randomness — manipulable.
+      Use Chainlink VRF. Checklist: weak randomness.
+    patterns:
+      - pattern-either:
+          - pattern: block.timestamp
+          - pattern: block.prevrandao
+          - pattern: blockhash(...)
+
+  - id: arbitrary-external-call-target
+    languages: [solidity]
+    severity: WARNING
+    message: >
+      External call to a function-parameter address — arbitrary-call sink.
+      Checklist SC06. cf. Dexible ($2M).
+    patterns:
+      - pattern: |
+          function $F(..., address $TARGET, ...) $VIS {
+            ...
+            $TARGET.call(...);
+            ...
+          }
