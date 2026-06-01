@@ -70,3 +70,38 @@ rules:
             $TARGET.call(...);
             ...
           }
+
+  # --- promoted from Solodit mining (2026-06-01) ---
+
+  - id: balanceof-self-for-accounting
+    languages: [solidity]
+    severity: WARNING
+    message: >
+      Accounting derived from token.balanceOf(address(this)) — donation-attack
+      surface; use internal accounting. Checklist Vault/SOL-AM-DA-1.
+    patterns:
+      - pattern-either:
+          - pattern: $T.balanceOf(address(this))
+          - pattern: address(this).balance
+
+  - id: ecrecover-result-unvalidated
+    languages: [solidity]
+    severity: WARNING
+    message: >
+      ecrecover result must be checked against address(0) and the expected signer,
+      and the digest must include nonce + chainId for replay safety.
+      Checklist Signatures/SOL-Signature-1..4.
+    patterns:
+      - pattern: ecrecover(...)
+
+  - id: swap-without-min-out-or-deadline
+    languages: [solidity]
+    severity: INFO
+    message: >
+      Swap/router call — confirm a non-zero minAmountOut and a deadline are passed
+      (slippage/MEV protection). Checklist AMM/SOL-Defi-AS-1,2,11.
+    patterns:
+      - pattern-either:
+          - pattern: $R.swapExactTokensForTokens(...)
+          - pattern: $R.exactInput(...)
+          - pattern: $R.exactInputSingle(...)

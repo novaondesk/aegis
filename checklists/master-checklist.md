@@ -102,6 +102,69 @@ Legend: 🤖 = an automated tool/rule can flag candidates · 👁 = needs human 
 
 ---
 
+---
+
+## Protocol-archetype playbooks 👁
+
+Hunters approach by *what the protocol is*, not just by bug class. These are the
+highest-signal questions per archetype, promoted from the Solodit mining (see
+`solodit-aggregated-checklist.md` for the full 370-item backstop). Each maps to real
+losses.
+
+### Vault / ERC-4626
+- [ ] First-depositor / share-inflation: can attacker mint 1 share then donate to
+      inflate `pps` and steal the next depositor's funds? Dead-shares mitigation? `SOL-Defi-General-4`
+- [ ] Donation attack: does accounting use `balanceOf(this)` instead of internal
+      tracking? (direct transfer skews share price) `SOL-AM-DA-1`
+- [ ] Deposit + withdraw in the **same tx/block** allowed? (flash-loan share games) `SOL-Defi-General-8`, `SOL-Defi-FlashLoan-2`
+- [ ] What happens with **1 wei** left in the pool? Rounding/divide-by-zero. `SOL-Defi-General-7`
+
+### AMM / Swap
+- [ ] Slippage: hardcoded? calculated on-chain (manipulable)? enforced at the *last*
+      step before transfer? `SOL-Defi-AS-1`,`-13`,`-14`
+- [ ] Deadline protection present? `SOL-Defi-AS-2`
+- [ ] Callback functions verify the **caller** address? (fake-pool callback drain) `SOL-Defi-AS-12`
+- [ ] Fee-on-transfer / rebasing / non-18-decimal tokens handled? `SOL-Defi-AS-9`,`-10`,`-8`
+- [ ] Rounding in the constant-product / invariant formula. `SOL-Defi-AS-5`
+
+### Lending / Borrowing
+- [ ] Does liquidation work during rapid downturns / when paused / when resumed? `SOL-Defi-Lending-1`,`-4`,`-5`
+- [ ] Self-liquidation for undue profit? `SOL-Defi-Lending-3`
+- [ ] Front-run a tiny collateral top-up to dodge liquidation? `SOL-Defi-Lending-6`
+- [ ] Is accrued **interest** included in the LTV/health-factor calc? `SOL-Defi-Lending-8`
+- [ ] Borrow + lend (or lend+borrow) the **same token in one tx**? `SOL-Defi-Lending-10`
+- [ ] Can a position become **unrepayable** (locked bad debt)? `SOL-Defi-Lending-12`
+
+### Liquid Staking Derivatives (LSD)
+- [ ] Exchange-rate repricing sandwichable to drain? `SOL-Defi-LSD-2`
+- [ ] Reentrancy on ETH send / `_safeMint` of withdrawal NFTs? `SOL-Defi-LSD-3`
+- [ ] Arbitrary exchange rate settable on queued withdrawals? `SOL-Defi-LSD-4`
+- [ ] Precision loss in deposit/withdraw/reward math? `SOL-Defi-LSD-9`
+
+### Staking / Rewards
+- [ ] Rewards up-to-date in **all** paths (claim before/after stake changes)? `SOL-Defi-Staking-3`
+- [ ] Can one user grief another's lock duration by staking on their behalf? `SOL-Defi-Staking-1`
+
+### Signatures (permit / meta-tx / cross-chain msgs)
+- [ ] Replay-guarded (nonce + chainId + contract addr in the digest)? `SOL-Signature-1`
+- [ ] Malleability handled (use ECDSA lib, reject high-s)? `SOL-Signature-2`
+- [ ] ecrecover return checked against `address(0)` and expected signer? `SOL-Signature-3`,`-4`
+- [ ] Deadline enforced? `SOL-Signature-5`
+
+### Multi-chain / Cross-chain (Kelp-class territory)
+- [ ] Cross-chain message verifies **source chain + sender + nonce**; DVN/verifier set
+      not a single point of failure? `SOL-McCc-8`, X01
+- [ ] `block.number`/`block.timestamp` assumed consistent across chains? `SOL-McCc-1`
+- [ ] ERC20 decimals consistent across chains? `SOL-McCc-6`
+- [ ] `PUSH0`/opcode compatibility on every target chain (zkSync etc.)? `SOL-McCc-3`,`-12`
+
+> ⚠️ **Scope note:** the mined Solodit checklist and these playbooks are **Solidity/EVM-centric**.
+> Project scope also includes **Solana (Rust/Anchor)** and **Sui/Move** — those need
+> separate, ecosystem-specific checklists (e.g. Anchor account-validation / signer
+> checks, Move resource & ability model). Tracked in the research-log backlog.
+
+---
+
 ## How to run this
 1. Run automated suite first (`tools/`), record which 🤖 items got candidates.
 2. Walk every 👁 item by hand — these are where bounties live.
