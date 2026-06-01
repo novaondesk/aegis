@@ -30,6 +30,25 @@ verify technical claims against primary post-mortems and on-chain traces.
 - Code4rena shutdown / Immunefi absorb: https://www.theblock.co/post/401179/immufefi-absorb-code4rena-bug-bounty-customers-shutdown-decision
 - Best DeFi security practices (repo): https://github.com/arunimshukla/Best-DeFi-Security-Practices
 
+## Security tooling & AI audit agents
+- Shannon (AI pentester): https://github.com/KeygraphHQ/shannon
+- forefy/.context (AI agent skills for SC auditing): https://github.com/forefy/.context
+- advaitbd/smartguard (multi-agent auditor + PoC): https://github.com/advaitbd/smartguard
+- l33tdawg/aether (SC security analysis + PoC framework): https://github.com/l33tdawg/aether
+- OpenAuditLabs/agent (multi-agent SC analysis engine): https://github.com/OpenAuditLabs/agent
+- Heimdallr (neuro-symbolic auditing, arXiv): https://arxiv.org/abs/2601.17833
+- PoCo (agentic PoC exploit gen, arXiv): https://arxiv.org/abs/2511.02780
+- heimdall-rs (EVM bytecode decompiler): https://github.com/Jon-Becker/heimdall-rs
+- sirhashalot/SCV-List (vuln taxonomy): https://github.com/sirhashalot/SCV-List
+- WeiZ-boot/survey-on-smart-contract-vulnerability: https://github.com/WeiZ-boot/survey-on-smart-contract-vulnerability
+- coral-xyz/sealevel-attacks (Solana): https://github.com/coral-xyz/sealevel-attacks
+
+## Defensive / runtime monitoring
+- Forta — preventing exploits with automatic pausing: https://www.forta.org/blog/preventing-smart-contract-exploits-with-automatic-pausing
+- Forta — Attack Detector 2.0: https://www.forta.org/blog/attack-detector-2
+- Hacken — Web3 security stack: https://hacken.io/discover/web3-security-stack/
+- Tenderly — web3 tech stack: https://blog.tenderly.co/web3-tech-stack/
+
 ## To add (primary sources — TODO)
 - [ ] Trail of Bits building-secure-contracts + not-so-smart-contracts
 - [ ] Solodit aggregated findings

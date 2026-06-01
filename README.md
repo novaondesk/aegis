@@ -5,36 +5,65 @@ vulnerability patterns, and build a **semi-automated triage suite** for reviewin
 smart contracts on-chain — with the goal of finding (and responsibly disclosing)
 bugs through bug-bounty programs (Immunefi, Sherlock, etc.).
 
-## The thesis (and the honest caveat)
+## Technical approach
 
-There is **no** "press a button, get a bug" tool. If there were, the bounty
-programs would not be paying out $110M+. The high-value bugs are **business-logic
-and economic** flaws that require understanding what the protocol is *supposed* to
-do — and automated tools cannot read intent.
+The suite layers four review stages over a curated, exploit-derived pattern library:
 
-What *is* real, and what this repo builds toward:
+1. **Static analysis** — Slither + custom semgrep rules flag candidate patterns.
+2. **Pattern checklist** — exploit-justified checks (OWASP SC Top 10 2026 + archetype
+   playbooks) walked against the code.
+3. **Dynamic verification** — Foundry/Echidna invariant tests + symbolic (Halmos/Z3)
+   for the precision/arithmetic class.
+4. **PoC** — every finding is reproduced as a runnable exploit before it counts.
 
-> **Automated first-pass** (static analysis + custom pattern rules) to narrow the
-> haystack → applied on top of a **curated, exploit-derived checklist** → confirmed
-> with **invariant-testing harnesses** → finished with **human judgment**.
-
-The durable asset here is **the pattern library** we build from studying real
-exploits. The tooling is just a force-multiplier on a trained eye.
-
-## How a hunt actually flows (target → finding)
+### Hunt pipeline (target → finding)
 
 ```
-1. SELECT   pick a live bounty target (scope, payout, complexity)
-2. RECON    pull verified source, map architecture, identify trust boundaries
-3. TRIAGE   run automated suite (slither + semgrep rules + heuristics)
-4. REVIEW   walk the exploit-derived checklist against the code, by hand
+1. SELECT   pick an in-scope bounty target (scope, payout, complexity)
+2. RECON    pull verified source (or decompile via heimdall-rs), map trust boundaries
+3. TRIAGE   run the automated suite (slither + semgrep)
+4. REVIEW   walk the exploit-derived checklist + archetype playbooks
 5. HYPOTH.  form a concrete "if X then attacker gains Y" hypothesis
 6. PROVE    write a Foundry/Echidna PoC that breaks an invariant
 7. REPORT   write up with severity (Immunefi V2.2) + working PoC
 ```
 
-Steps 3 is where this suite saves time. Steps 4–6 are where the money is, and they
-stay human.
+## Tools
+
+Brief summaries of the tooling the suite uses and integrates. Full landscape +
+integration notes: [`docs/methodology/security-tooling-landscape.md`](docs/methodology/security-tooling-landscape.md).
+
+**Static analysis**
+- **Slither** — industry-standard Solidity static analyzer (80+ detectors, AST-based).
+  Config in `tools/slither/`. First-pass triage.
+- **semgrep** — pattern-matching over source; `tools/semgrep/` holds custom rules, one
+  per extracted exploit pattern (e.g. `balanceOf`-accounting, unchecked `ecrecover`).
+- **Mythril / Aderyn** — symbolic and Rust-based static analyzers as deeper alternates.
+
+**Dynamic & symbolic**
+- **Foundry (`forge`)** — primary test/PoC framework; built-in fuzzing + invariant
+  testing. All PoCs live in `poc/`.
+- **Echidna / Medusa** — property-based fuzzers; define an invariant, hunt inputs that
+  break it.
+- **Halmos / Certora** — symbolic/formal verification; strongest on the arithmetic and
+  precision class (SC07).
+
+**Recon**
+- **heimdall-rs** — EVM bytecode toolkit; decompiles and extracts info from *unverified*
+  contracts, turning a black-box address into reviewable pseudo-source.
+
+**AI audit agents (reference / integration candidates)**
+- **forefy/.context** — Agent Skills (`SKILL.md`) for SC auditing across Solidity,
+  Anchor, Vyper, Sui; installs to `.claude/skills/`. Generates findings, PoCs, attacker
+  story-flow graphs. Directly usable in our Claude-based setup.
+- **smartguard** — multi-agent auditor (Analyzer→Skeptic→Exploiter→Generator→Runner)
+  combining Slither, a RAG vuln corpus, and `forge test` for PoC execution.
+- **Shannon** — autonomous web-app/API pentester; architectural blueprint for an
+  agentic, multi-phase, "no-exploit-no-report" hunter.
+
+**Defensive / runtime (target-selection context)**
+- **Forta**, **OpenZeppelin Defender**, **Tenderly** — on-chain monitoring, attack
+  detection, transaction simulation, and automated circuit-breaker/pause response.
 
 ## Repo layout
 
