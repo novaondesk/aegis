@@ -30,6 +30,26 @@ verify technical claims against primary post-mortems and on-chain traces.
 - Code4rena shutdown / Immunefi absorb: https://www.theblock.co/post/401179/immufefi-absorb-code4rena-bug-bounty-customers-shutdown-decision
 - Best DeFi security practices (repo): https://github.com/arunimshukla/Best-DeFi-Security-Practices
 
+## Solana / Anchor security
+- Helius — Hitchhiker's Guide to Solana Program Security: https://www.helius.dev/blog/a-hitchhikers-guide-to-solana-program-security
+- Neodyme — Solana Security Workshop: https://neodyme.io/blog/solana-security/
+- Anchor Framework Security Best Practices: https://www.anchor-lang.com/docs/security
+- Sealevel Attacks (Canonical Examples): https://github.com/coral-xyz/sealevel-attacks
+- Nomos — Anchor Framework Security Limits: https://nomoslabs.io/blog/anchor-framework-security-limits-remaining-risks
+- VultBase — Anchor Program Security: https://www.vultbase.com/articles/anchor-program-security-solana
+- Medium — Solana Security in Anchor V2 Era: https://medium.com/@FrankCastleAudits/solana-security-in-the-anchor-v2-era-where-the-bugs-moved-3050adc39412
+- AnchorScan — AnchorLang Security Best Practices 2026: https://anchorscan.ca/blog/anchorlang-security-best-practices-for-2026.html
+
+## Base / OP-Stack L2 security
+- OP Stack Docs — Cross-Domain Overview: https://docs.optimism.io/op-stack/bridging/cross-domain
+- OP Stack Specs — Messengers: https://specs.optimism.io/protocol/messengers.html
+- Chainlink — L2 Sequencer Uptime Feeds: https://docs.chain.link/data-feeds/l2-sequencer-feeds
+- Medium — L2 Sequencer and Stale Oracle Prices Bug: https://medium.com/@lopotras/l2-sequencer-and-stale-oracle-prices-bug-54a749417277
+- Code4rena — GoodEntry Findings (L2 Sequencer Check): https://github.com/code-423n4/2023-08-goodentry-findings/issues/503
+- CryptoHawking — Oracle Manipulation (Stale Chainlink Feeds): https://www.cryptohawking.com/blog/oracle-manipulation-chainlink-staleness
+- Chainstack — Base RPC Providers 2026: https://chainstack.com/base-rpc-providers-2026/
+- Messari — State of the OP Stack Q1 2026: https://messari.io/report/state-of-the-op-stack-q1-2026
+
 ## To add (primary sources — TODO)
 - [ ] Trail of Bits building-secure-contracts + not-so-smart-contracts
 - [ ] Solodit aggregated findings
