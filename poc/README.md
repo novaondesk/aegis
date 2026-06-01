@@ -15,6 +15,7 @@ forge test -vv
 | Test | Class | Demonstrates |
 |------|-------|--------------|
 | `test/InflationAttack.t.sol` | SC07/SC02 | ERC-4626 first-depositor share-inflation: attacker steals victim's rounding remainder; virtual-offset fix neutralizes it. |
+| `test/ReadOnlyReentrancy.t.sol` | SC08 | Read-only reentrancy (Curve `get_virtual_price` class): inflated view price mid-callback lets attacker over-borrow from a consumer; CEI fix neutralizes it. |
 
 Run one: `forge test --match-contract InflationAttack -vv`
 

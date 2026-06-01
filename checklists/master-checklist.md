@@ -55,7 +55,8 @@ Legend: 🤖 = an automated tool/rule can flag candidates · 👁 = needs human 
 - [ ] Checks-Effects-Interactions on every external-call function? State updated
       **before** the call? *Rari Capital: borrow() lacked CEI, $80M.*
 - [ ] **Read-only reentrancy**: does a view function return stale state mid-callback
-      that another protocol trusts? (modern, tool-blind)
+      that another protocol trusts? (modern, tool-blind) — worked PoC:
+      `docs/exploits/read-only-reentrancy.md` + `poc/test/ReadOnlyReentrancy.t.sol`.
 - [ ] Cross-function & cross-contract reentrancy (shared state, ERC777/ERC721 hooks,
       ERC-1155 callbacks, native `call` to attacker-controlled address)?
 - [ ] `nonReentrant` actually applied to *all* entrant paths, not just one?
