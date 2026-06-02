@@ -15,8 +15,9 @@ Legend: 🤖 = an automated tool/rule can flag candidates · 👁 = needs human 
       share-calc flaw → near-infinite mint.*
 - [ ] Can the **first depositor** manipulate share price (empty-vault / share inflation
       attack)? Is there a dead-shares / min-liquidity mint?
-- [ ] Are deposit/withdraw/borrow/repay symmetric? Any asymmetry an attacker can loop?
+- [ ] Does deposit/withdraw/borrow/repay symmetric? Any asymmetry an attacker can loop?
       *TMXTribe: looped mint-and-stake.*
+- [ ] **Solana: trusted-root validation** — when validating account chains (bank → collateral → swap → mint), is the root anchored to a program-controlled source? Can an attacker create a parallel universe of fake accounts that passes all `assert_keys_eq!` checks? *Cashio: $52.8M — fake bank → fake Saber swap → fake LP → real CASH mint.*
 - [ ] Do fee/reward calculations round in the **protocol's** favor, never the user's?
 - [ ] Can a function be called in an unexpected **order** or **state** (uninitialized,
       paused, post-migration) to extract value?
@@ -32,10 +33,33 @@ Legend: 🤖 = an automated tool/rule can flag candidates · 👁 = needs human 
       `answeredInRound`? Min/max bounds?
 - [ ] Does the protocol price LP tokens / LSTs / rebasing tokens correctly (not via
       naive `balanceOf`)?
+- [ ] Is the oracle price source **endogenous** to the protocol (derived from the
+      protocol's own markets)? If so, an attacker can create a self-referential
+      pricing loop. *Mango Markets: $4M in buys on Mango's own markets moved the
+      oracle price 23x, unlocking $114M in borrowing.*
+- [ ] Are there **circuit breakers / deviation bounds** that halt borrowing or
+      liquidations when the oracle price moves more than X% within Y minutes?
+      *Mango Markets: 2,300% spike in 20 minutes with no safety trigger.*
+- [ ] Is collateral **isolated by asset type**, or can a single manipulated asset
+      unlock borrowing against all other assets via cross-margin? *Mango Markets:
+      MNGO-PERP gains could borrow USDC, SOL, BTC, ETH with no per-asset caps.*
 
 ## SC07 — Arithmetic / Precision 👁🤖 (the quiet killer in mature AMMs)
 - [ ] Rounding **direction** on every division — does it ever favor the caller?
-      *Balancer V2 ComposableStablePool: rounding edge case distorted accounting, ~$95M+.*
+      *Balancer V2 ComposableStablePool: rounding edge case distorted accounting, ~$128M.*
+- [ ] 🤖 **SC07-R2:** Do upscaling and downscaling operations use **consistent directional
+      rounding**? If downscaling uses `divUp`/`divDown`, does upscaling use the matching
+      `mulUp`/`mulDown`? A mismatch (e.g., always-round-down `_upscale` paired with
+      directional `_downscale`) silently deflates invariant calculations.
+      *Balancer V2: `_upscale()` always used `mulDown`, but `_swapGivenOut()` needed
+      `mulUp` for output amounts — 65 micro-swaps compounded the error into $128M.*
+- [ ] 🤖 **SC07-R3:** Have you tested invariant preservation with **small balance values**
+      (1-20 wei range)? Rounding errors are proportionally largest for tiny amounts
+      (e.g., 8 wei × scaling factor → 12.5% precision loss). Fuzz with `balance < 100`.
+- [ ] 👁 **SC07-R4:** For `batchSwap` / multi-hop functions: can an attacker **compound**
+      tiny per-operation rounding errors across many hops in a single atomic tx?
+      Individual swaps may be safe, but 65+ sequential swaps can amplify a 1-wei error
+      into millions. Test with maximum-length swap batches.
 - [ ] Order of operations: multiply-before-divide to preserve precision?
 - [ ] Fixed-point math: mismatched decimals (6 vs 18), scaling factors, WAD/RAY mixups?
 - [ ] Can a tiny/zero-value input (1 wei, 0 shares) trigger a divide-by-zero or a
@@ -140,6 +164,14 @@ losses.
 - [ ] Is accrued **interest** included in the LTV/health-factor calc? `SOL-Defi-Lending-8`
 - [ ] Borrow + lend (or lend+borrow) the **same token in one tx**? `SOL-Defi-Lending-10`
 - [ ] Can a position become **unrepayable** (locked bad debt)? `SOL-Defi-Lending-12`
+- [ ] When pricing collateral via external calls (CPI, oracle adapters, cross-program
+  queries), is the **external source identity validated** against a known-good value?
+  (Not just the data — the *source* itself.) *Loopscale: CPI to user-supplied "RateX"
+  program returned inflated PT prices → $5.8M undercollateralized loans.*
+- [ ] If the protocol supports **multiple collateral types**, does each type enforce the
+  **same validation checks** (program ID, account constraints, price bounds)? Inconsistency
+  between adapters is a signal. *Loopscale: RateX adapter (added post-launch) lacked
+  program-ID checks that other PT adapters had.*
 
 ### Liquid Staking Derivatives (LSD)
 - [ ] Exchange-rate repricing sandwichable to drain? `SOL-Defi-LSD-2`

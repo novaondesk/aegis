@@ -59,6 +59,12 @@ verify technical claims against primary post-mortems and on-chain traces.
 - Medium — Solana Security in Anchor V2 Era: https://medium.com/@FrankCastleAudits/solana-security-in-the-anchor-v2-era-where-the-bugs-moved-3050adc39412
 - AnchorScan — AnchorLang Security Best Practices 2026: https://anchorscan.ca/blog/anchorlang-security-best-practices-for-2026.html
 
+## Solana exploit case studies (primary sources)
+- Loopscale post-mortem (RateX PT pricing, $5.8M): https://blog.loopscale.com/posts/postmortem
+- Halborn — Loopscale explained: https://www.halborn.com/blog/post/explained-the-loopscale-hack-april-2025
+- Quadriga Initiative — Loopscale case study: https://quadrigainitiative.com/casestudy/loopscale.php
+- Nomos — Loopscale full analysis: https://nomoslabs.io/blog/loopscale-hack-oracle-flaw-solana-defi-full-analysis
+
 ## Base / OP-Stack L2 security
 - OP Stack Docs — Cross-Domain Overview: https://docs.optimism.io/op-stack/bridging/cross-domain
 - OP Stack Specs — Messengers: https://specs.optimism.io/protocol/messengers.html
