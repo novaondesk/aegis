@@ -39,6 +39,48 @@ Each item is a yes/no question + the code smell + a real exploit that maps to it
   especially dangerous during high volatility or oracle downtime.
 - **Fix:** `require!(now - price.publish_time < MAX_STALENESS_SECS, ErrorCode::StaleOracle)`
 - **Severity:** HIGH
+### Account Confusion / Type Cosplay
+- [ ] Is there a discriminator check to prevent one account type being misinterpreted as another?
+  - **Code smell:** Raw `AccountInfo` deserialization without type verification
+  - **Exploit:** Cashio ($52M) — fake collateral accounts passed as valid
+  - **Mitigation:** Always use Anchor's `Account<'info, T>` which includes discriminator checks
+
+### Missing `has_one` / Account Relationship
+- [ ] Are all authority/vault/mint relationships explicitly verified?
+  - **Code smell:** Account passed without verifying it matches the expected authority
+  - **Exploit:** Unauthorized operations on wrong accounts
+  - **Mitigation:** Use `#[account(has_one = authority)]` constraints
+
+### Trusted Root / Anchor-of-Trust Validation 👁
+- [ ] When validating a chain of accounts (A → B → C → D), is the **root** of the chain anchored to a program-controlled or authority-gated source?
+  - **Code smell:** `assert_keys_eq!` chain where any intermediate account is user-creatable without authorization
+  - **Exploit:** Cashio ($52.8M) — attacker created a parallel universe of fake bank → fake Saber swap → fake Arrow → fake LP tokens. Every `assert_keys_eq!` passed because none anchored to a trusted root. The Arrow account's `mint` field was never validated against a known-good Saber LP mint.
+  - **Mitigation:** Either (a) whitelist valid collateral mints in a program-controlled account, or (b) verify the deepest account in the chain is owned by a known program (e.g., `saber_swap.owner == SABER_PROGRAM_ID`), or (c) gate bank/collateral creation behind an authority check so attackers can't construct parallel chains.
+  - **Detection heuristic:** For each `assert_keys_eq!` chain, ask: "Can an attacker create a fake version of the first account that satisfies all downstream checks?" If yes, the chain lacks a trusted root.
+
+### Permissionless Initialization Risk 👁
+- [ ] If any account in a validation chain can be created by any user (permissionless `init`), does the downstream instruction verify the account was created by an authorized authority?
+  - **Code smell:** `crate_mint` / bank / pool creation without authority gate, followed by validation chains that trust user-created account fields
+  - **Exploit:** Cashio — bank creation was permissionless. Attacker created a bank with worthless tokens, then used it to mint real CASH because no check verified the bank was authorized to issue CASH.
+  - **Mitigation:** Gate account creation behind `has_one = authority` or require a program-controlled whitelist for accounts that participate in value-bearing operations.
+
+### Arbitrary CPI
+- [ ] Is the target program ID for CPI calls verified against an expected value?
+  - **Code smell:** CPI to user-supplied program ID without validation
+  - **Exploit:** Arbitrary code execution via malicious program
+  - **Mitigation:** Hardcode expected program IDs or use Anchor's CPI modules
+
+### PDA Bump Canonicalization
+- [ ] Is `find_program_address` used instead of `create_program_address` with user-supplied bump?
+  - **Code smell:** User-provided bump seed in PDA derivation
+  - **Exploit:** PDA collision attacks, unauthorized signer access
+  - **Mitigation:** Always use `find_program_address` which returns canonical bump
+
+### Duplicate Mutable Accounts
+- [ ] Are mutable accounts checked for uniqueness (same account not passed twice)?
+  - **Code smell:** Two `#[account(mut)]` parameters of same type without key comparison
+  - **Exploit:** Double-mutation attacks, balance manipulation
+  - **Mitigation:** Add `require!(account1.key() != account2.key(), ErrorCode::DuplicateAccount)`
 
 ---
 

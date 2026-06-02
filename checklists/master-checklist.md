@@ -15,8 +15,9 @@ Legend: 🤖 = an automated tool/rule can flag candidates · 👁 = needs human 
       share-calc flaw → near-infinite mint.*
 - [ ] Can the **first depositor** manipulate share price (empty-vault / share inflation
       attack)? Is there a dead-shares / min-liquidity mint?
-- [ ] Are deposit/withdraw/borrow/repay symmetric? Any asymmetry an attacker can loop?
+- [ ] Does deposit/withdraw/borrow/repay symmetric? Any asymmetry an attacker can loop?
       *TMXTribe: looped mint-and-stake.*
+- [ ] **Solana: trusted-root validation** — when validating account chains (bank → collateral → swap → mint), is the root anchored to a program-controlled source? Can an attacker create a parallel universe of fake accounts that passes all `assert_keys_eq!` checks? *Cashio: $52.8M — fake bank → fake Saber swap → fake LP → real CASH mint.*
 - [ ] Do fee/reward calculations round in the **protocol's** favor, never the user's?
 - [ ] Can a function be called in an unexpected **order** or **state** (uninitialized,
       paused, post-migration) to extract value?
