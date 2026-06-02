@@ -1,109 +1,112 @@
-# DeFi Bounty Suite
+# Aegis
 
-A research project to study real-world DeFi exploits, distill them into reusable
-vulnerability patterns, and build a **semi-automated triage suite** for reviewing
-smart contracts on-chain — with the goal of finding (and responsibly disclosing)
-bugs through bug-bounty programs (Immunefi, Sherlock, etc.).
+**Exploit-catalog-driven smart contract security auditing.**
 
-## Technical approach
+Aegis evaluates a target contract or protocol against a curated catalog of *studied,
+real-world DeFi exploits* — so you can find vulnerabilities and fix them before an
+attacker does. Every studied exploit becomes a structured **detector**; auditing a
+target means sweeping it against the whole catalog, then proving each hit with a
+runnable PoC.
 
-The suite layers four review stages over a curated, exploit-derived pattern library:
+> The durable asset is the **catalog**, not any one scanner. Tools narrow the haystack;
+> the catalog tells you exactly which known attacks to check, and a PoC tells you
+> whether the target is actually vulnerable.
 
-1. **Static analysis** — Slither + custom semgrep rules flag candidate patterns.
-2. **Pattern checklist** — exploit-justified checks (OWASP SC Top 10 2026 + archetype
-   playbooks) walked against the code.
-3. **Dynamic verification** — Foundry/Echidna invariant tests + symbolic (Halmos/Z3)
-   for the precision/arithmetic class.
-4. **PoC** — every finding is reproduced as a runnable exploit before it counts.
-
-### Hunt pipeline (target → finding)
+## The approach (target → finding)
 
 ```
-1. SELECT   pick an in-scope bounty target (scope, payout, complexity)
-2. RECON    pull verified source (or decompile via heimdall-rs), map trust boundaries
-3. TRIAGE   run the automated suite (slither + semgrep)
-4. REVIEW   walk the exploit-derived checklist + archetype playbooks
-5. HYPOTH.  form a concrete "if X then attacker gains Y" hypothesis
-6. PROVE    write a Foundry/Echidna PoC that breaks an invariant
-7. REPORT   write up with severity (Immunefi V2.2) + working PoC
+1. RECON   pull source (or decompile via heimdall-rs); pin chain + archetype
+2. SWEEP   evaluate the target against EVERY catalog entry whose archetype fits.
+           Each entry's `applies_when` preconditions are checked against the code →
+           a coverage table of HIGH / MED / N-A verdicts. Nothing studied is skipped.
+3. REVIEW  walk the exploit-derived checklist for what the catalog doesn't cover
+4. PROVE   write a Foundry/Anchor/Move PoC that breaks the entry's invariant
+5. REPORT  severity (Immunefi V2.2) + the fix — the point is a safer target
 ```
 
-## Tools
+The sweep is what makes this repeatable: "we checked all N known exploits against this
+target" is a coverage claim, not a vibe. See [`catalog/README.md`](catalog/README.md).
 
-Brief summaries of the tooling the suite uses and integrates. Full landscape +
-integration notes: [`docs/methodology/security-tooling-landscape.md`](docs/methodology/security-tooling-landscape.md).
+## The catalog
 
-**Static analysis**
-- **Slither** — industry-standard Solidity static analyzer (80+ detectors, AST-based).
-  Config in `tools/slither/`. First-pass triage.
-- **semgrep** — pattern-matching over source; `tools/semgrep/` holds custom rules, one
-  per extracted exploit pattern (e.g. `balanceOf`-accounting, unchecked `ecrecover`).
-- **Mythril / Aderyn** — symbolic and Rust-based static analyzers as deeper alternates.
+[`catalog/exploits.yaml`](catalog/exploits.yaml) is the single source of truth. Each
+entry distills a real incident into a detector: the target shapes it applies to, the
+preconditions to check, how to probe, the invariant that breaks, and links to the
+deep-dive case study + runnable PoC.
 
-**Dynamic & symbolic**
-- **Foundry (`forge`)** — primary test/PoC framework; built-in fuzzing + invariant
-  testing. All PoCs live in `poc/`.
-- **Echidna / Medusa** — property-based fuzzers; define an invariant, hunt inputs that
-  break it.
-- **Halmos / Certora** — symbolic/formal verification; strongest on the arithmetic and
-  precision class (SC07).
+| Exploit | Class | Chain | Status |
+|---|---|---|---|
+| ERC-4626 share-inflation | SC07/SC02 | EVM | ✅ coded PoC |
+| Read-only reentrancy (Curve class) | SC08 | EVM | ✅ coded PoC |
+| Balancer V2 rounding ($128M) | SC07 | EVM (6 chains) | 📄 studied |
+| Cashio infinite-mint ($52.8M) | SC05/SC02 | Solana | 📄 studied |
+| Cetus CLMM overflow ($223M) | SC07/SC09 | Sui/Move | 📄 studied |
+| Loopscale spot-price oracle ($5.8M) | SC03/SC02 | Solana | 📄 studied |
+| Loopscale unvalidated CPI ($5.8M) | SC03/SC05 | Solana | 📄 studied |
+| Mango oracle manipulation ($114M) | SC03/SC02 | Solana | 📄 studied |
 
-**Recon**
-- **heimdall-rs** — EVM bytecode toolkit; decompiles and extracts info from *unverified*
-  contracts, turning a black-box address into reviewable pseudo-source.
+`coded` = runnable PoC in [`poc/`](poc/); `studied` = deep-dive case study, PoC not yet ported.
 
-**AI audit agents (reference / integration candidates)**
-- **forefy/.context** — Agent Skills (`SKILL.md`) for SC auditing across Solidity,
-  Anchor, Vyper, Sui; installs to `.claude/skills/`. Generates findings, PoCs, attacker
-  story-flow graphs. Directly usable in our Claude-based setup.
-- **smartguard** — multi-agent auditor (Analyzer→Skeptic→Exploiter→Generator→Runner)
-  combining Slither, a RAG vuln corpus, and `forge test` for PoC execution.
-- **Shannon** — autonomous web-app/API pentester; architectural blueprint for an
-  agentic, multi-phase, "no-exploit-no-report" hunter.
+## Use it as an agent skill
 
-**Defensive / runtime (target-selection context)**
-- **Forta**, **OpenZeppelin Defender**, **Tenderly** — on-chain monitoring, attack
-  detection, transaction simulation, and automated circuit-breaker/pause response.
+Aegis ships as a loadable [Agent Skill](skills/aegis-audit/SKILL.md) so any Claude/agent
+can run the sweep for you:
+```bash
+cp -r skills/aegis-audit ~/.claude/skills/    # or <project>/.claude/skills/
+```
+Then ask it to *"audit this contract"* or *"evaluate this target against known
+exploits."* It loads the catalog, runs the sweep, and drives recon → PoC → report. See
+[`skills/`](skills/).
+
+## Tooling
+
+The sweep is accelerated by automated first-pass tools; full landscape +
+integration notes in [`docs/methodology/security-tooling-landscape.md`](docs/methodology/security-tooling-landscape.md).
+
+- **Slither / semgrep** — static first pass. `tools/slither/`, `tools/semgrep/` (one
+  rule per extracted pattern). Most catalog entries are *not* statically flagged — the
+  preconditions are how you find those.
+- **Foundry (`forge`)** — primary PoC + fuzz/invariant harness. PoCs live in `poc/`.
+- **Echidna / Medusa, Halmos / Certora** — property fuzzing and symbolic/formal, strongest
+  on the arithmetic/precision class (SC07).
+- **heimdall-rs** — decompiles unverified bytecode into reviewable pseudo-source for recon.
 
 ## Repo layout
 
 | Path | What lives here |
 |---|---|
-| `docs/exploits/` | Case studies of real exploits — one file per incident |
-| `docs/vuln-classes/` | The vulnerability taxonomy (mapped to OWASP SC Top 10 2026) |
-| `docs/methodology/` | Industry practices, the tooling stack, the hunting workflow |
-| `checklists/` | The **suite** — actionable per-class review checklists |
-| `tools/slither/` | Slither configs / custom detector notes |
-| `tools/semgrep/` | Custom semgrep rules for Solidity patterns |
-| `tools/foundry-invariants/` | Reusable invariant-test templates |
-| `targets/` | Notes on specific in-scope bounty targets (gitignored if sensitive) |
-| `research-log/` | Dated log of what we looked at and what we found |
+| `catalog/` | **The exploit catalog** — `exploits.yaml` (sweep source) + schema |
+| `skills/` | Aegis as a loadable agent skill (`aegis-audit`) |
+| `docs/exploits/` | Deep-dive case studies — one file per incident/class |
+| `docs/vuln-classes/` | Taxonomy (OWASP SC Top 10 2026 + X-classes) |
+| `docs/methodology/` | Industry practice, tooling stack, sources |
+| `checklists/` | Exploit-justified per-class review checklists |
+| `tools/` | Slither config, semgrep rules, Foundry invariant templates |
+| `poc/` | Runnable Foundry PoCs (vulnerable + safe + exploit test) |
+| `research-log/` | Dated log of what we looked at and found |
 
 ## Contributing (agents & humans)
 
 Read **[`AGENTS.md`](AGENTS.md)** first — it's the contract for how Nova and other
-agents contribute so the work compounds. The core loop: research → reproduce with a
-runnable PoC → distill a case study → encode a checklist item + detector → log.
-
-Active research day-plans live in [`docs/research-plans/`](docs/research-plans/)
-(current: Nova on **Solana + Base**).
-
-## Status
-
-v0.2 — research scaffold + first runnable deep-dive.
-- **Pattern library:** OWASP SC Top 10 (2026) taxonomy; 370-item Solodit EVM backstop;
-  exploit-justified front-line checklist with archetype playbooks.
-- **First coded deep-dive:** ERC-4626 share-inflation — vulnerable + safe contract + a
-  passing exploit PoC (`poc/`, see `docs/exploits/erc4626-inflation-attack.md`).
-- **Next:** Solana (Anchor) + Base checklists & PoCs per the day-plan; deep-dives for
-  Cetus/Balancer/Yearn with real source.
-
-See `research-log/` for the running log.
+agents contribute so the work compounds. The core loop: study an exploit → reproduce
+with a runnable PoC → write a case study → **add a catalog entry** + checklist item +
+detector → log.
 
 ## Ground rules
 
-- **Responsible disclosure only.** We hunt *in-scope* targets on bounty platforms,
-  or our own deployments. No touching out-of-scope contracts, no live exploitation.
+- **Defensive / responsible disclosure only.** We evaluate *in-scope* bounty targets,
+  public post-mortems, or our own deployments — to get bugs fixed. No out-of-scope
+  contracts, no live exploitation.
 - Every claimed finding needs a **reproducible PoC** before it counts.
-- We document *why* each pattern matters with a real loss attached — no theory-only
-  entries.
+- Every catalog entry documents *why* the pattern matters with a real loss attached —
+  no theory-only entries.
+
+## Status — v1.0.0
+
+First stable release. See [`CHANGELOG.md`](CHANGELOG.md) and [`research-log/`](research-log/).
+- **Catalog:** 8 exploit detectors (2 with coded PoCs), machine-readable + agent-driven.
+- **Skill:** `aegis-audit` runs the catalog sweep end to end.
+- **Pattern library:** OWASP SC Top 10 (2026) taxonomy; 370-item Solodit EVM backstop;
+  exploit-justified front-line checklist with archetype playbooks.
+- **Next:** port `studied` Solana/Move entries to coded PoCs; grow the catalog per the
+  research day-plans.

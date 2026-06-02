@@ -1,14 +1,15 @@
-# AGENTS.md — How to contribute to the DeFi Bounty Suite
+# AGENTS.md — How to contribute to Aegis
 
 This file is the contract for **AI agents (Nova and others)** and humans working on
 this repo. Read it fully before making changes. It defines what "good" looks like so
 contributions compound instead of sprawl.
 
 ## Mission (don't lose the plot)
-Build an **exploit-derived pattern library + semi-automated review suite** that helps a
-human find and responsibly disclose smart-contract bugs on bounty platforms. The
-durable asset is the **pattern library**, not any one scanner. Every contribution
-should make the next bug easier to find.
+Build an **exploit catalog + catalog-driven review skill** that lets an agent or human
+evaluate a target contract against every known, studied exploit, find vulnerabilities,
+and responsibly disclose them so they get fixed. The durable asset is the **catalog**
+(`catalog/exploits.yaml`), not any one scanner. Every contribution should make the next
+target easier to audit — ideally by adding/sharpening a catalog detector.
 
 > There is no autopilot. Tools narrow the haystack; humans find economic/logic bugs.
 > If you "find a bug," it is not real until a runnable PoC breaks an invariant.
@@ -20,15 +21,18 @@ should make the next bug easier to find.
    harness. A finding doc must link the PoC and state the broken invariant.
 3. **Cite primary sources.** Web reporting is a lead, not a fact. Verify $ figures and
    root causes against the protocol post-mortem + on-chain trace before asserting them.
-4. **Every new exploit studied must update three places:** a case study in
-   `docs/exploits/`, a sharpened item in `checklists/master-checklist.md`, and a
-   detection artifact (semgrep rule and/or invariant template). This is the loop.
+4. **Every new exploit studied must update four places:** a case study in
+   `docs/exploits/`, a **detector entry in `catalog/exploits.yaml`** (with checkable
+   `applies_when` preconditions), a sharpened item in `checklists/master-checklist.md`,
+   and a detection artifact (semgrep rule and/or invariant template). This is the loop.
 5. **Don't break the build.** `cd poc && forge build` must pass. PoC tests must pass
    (or be clearly marked `skip` with a reason).
 
 ## Repo map (where things go)
 | Path | Put here |
 |---|---|
+| `catalog/exploits.yaml` | One detector entry per studied exploit. The sweep source. See `catalog/README.md`. |
+| `skills/aegis-audit/` | The loadable agent skill that runs the catalog sweep. |
 | `docs/exploits/` | One case study per incident/class. Use `_TEMPLATE.md`. |
 | `docs/vuln-classes/` | Taxonomy (OWASP SC Top 10 2026 + off-chain X-classes). |
 | `docs/methodology/` | Industry practice, tooling, sources. |
@@ -48,9 +52,10 @@ should make the next bug easier to find.
 2. RESEARCH   read post-mortems / code / audit reports. Capture sources.
 3. REPRODUCE  build a minimal runnable PoC in poc/ (vulnerable + safe + test).
 4. DISTILL    write docs/exploits/<name>.md (use _TEMPLATE.md).
-5. ENCODE     add/sharpen a checklist item + a semgrep rule and/or invariant.
-6. LOG        append research-log/<YYYY-MM-DD>-<topic>.md (done / takeaways / next).
-7. COMMIT     small, focused commit (see identity below). Push.
+5. CATALOG    add a catalog/exploits.yaml entry with checkable applies_when preconditions.
+6. ENCODE     add/sharpen a checklist item + a semgrep rule and/or invariant.
+7. LOG        append research-log/<YYYY-MM-DD>-<topic>.md (done / takeaways / next).
+8. COMMIT     small, focused commit (see identity below). Push.
 ```
 
 ## Conventions
@@ -73,6 +78,7 @@ should make the next bug easier to find.
 ## Definition of done for a contribution
 - [ ] PoC builds and tests pass (or skipped-with-reason).
 - [ ] Case study written from `_TEMPLATE.md` with primary sources.
-- [ ] Checklist + detection artifact updated (the loop's step 5).
+- [ ] Catalog entry added/updated and still parses (`python3 -c "import yaml; yaml.safe_load(open('catalog/exploits.yaml'))"`).
+- [ ] Checklist + detection artifact updated.
 - [ ] `research-log/` appended.
 - [ ] Committed with the right identity and pushed.
