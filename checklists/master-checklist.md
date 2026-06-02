@@ -32,6 +32,16 @@ Legend: 🤖 = an automated tool/rule can flag candidates · 👁 = needs human 
       `answeredInRound`? Min/max bounds?
 - [ ] Does the protocol price LP tokens / LSTs / rebasing tokens correctly (not via
       naive `balanceOf`)?
+- [ ] Is the oracle price source **endogenous** to the protocol (derived from the
+      protocol's own markets)? If so, an attacker can create a self-referential
+      pricing loop. *Mango Markets: $4M in buys on Mango's own markets moved the
+      oracle price 23x, unlocking $114M in borrowing.*
+- [ ] Are there **circuit breakers / deviation bounds** that halt borrowing or
+      liquidations when the oracle price moves more than X% within Y minutes?
+      *Mango Markets: 2,300% spike in 20 minutes with no safety trigger.*
+- [ ] Is collateral **isolated by asset type**, or can a single manipulated asset
+      unlock borrowing against all other assets via cross-margin? *Mango Markets:
+      MNGO-PERP gains could borrow USDC, SOL, BTC, ETH with no per-asset caps.*
 
 ## SC07 — Arithmetic / Precision 👁🤖 (the quiet killer in mature AMMs)
 - [ ] Rounding **direction** on every division — does it ever favor the caller?

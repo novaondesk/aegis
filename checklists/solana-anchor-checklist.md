@@ -149,6 +149,36 @@ Legend: 🤖 = an automated tool/rule can flag candidates · 👁 = needs human 
   - **Exploit:** Flash loan oracle manipulation (Mango Markets $114M)
   - **Mitigation:** Use TWAP, multiple sources, staleness checks, min/max bounds
 
+### Self-Referential / Endogenous Oracle
+- [ ] Is the oracle price source **endogenous** to the protocol (derived from the
+      protocol's own markets)? If so, an attacker can create a self-referential
+      pricing loop where they manipulate the price on the very platform that uses it.
+  - **Code smell:** Oracle reads from Serum/OpenBook markets that the protocol itself
+    facilitates (spot or perp)
+  - **Exploit:** Mango Markets ($114M) — $4M in buys on Mango's own markets moved
+    the Pyth oracle price 23x, unlocking $114M in borrowing
+  - **Mitigation:** Use external oracle sources (Pyth with confidence intervals,
+    Chainlink), or implement TWAP with a window longer than the attack capital can
+    sustain
+
+### Missing Circuit Breakers
+- [ ] Are there circuit breakers / deviation bounds that halt borrowing or liquidations
+      when the oracle price moves more than X% within Y minutes?
+  - **Code smell:** Oracle price accepted at face value regardless of magnitude of change
+  - **Exploit:** Mango Markets — 2,300% price spike in 20 minutes with no safety trigger
+  - **Mitigation:** Implement per-asset deviation bounds (e.g., halt if >50% move in
+    10 minutes), pause borrowing on extreme moves, use Pyth confidence intervals
+
+### Cross-Margin Without Asset Isolation
+- [ ] Is collateral isolated by asset type, or can a single manipulated asset unlock
+      borrowing against all other assets via cross-margin?
+  - **Code smell:** Single collateral type (especially native/governance token) with
+    high collateral weight and no per-asset borrowing caps
+  - **Exploit:** Mango Markets — MNGO-PERP gains could borrow USDC, SOL, BTC, ETH
+    with no per-asset caps, turning a $5M manipulation into $114M extraction
+  - **Mitigation:** Per-asset collateral factors, isolation modes (limit what can be
+    borrowed against volatile collateral), debt ceilings per collateral type
+
 ---
 
 ## Signer Validation 👁
