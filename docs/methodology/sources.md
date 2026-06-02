@@ -75,7 +75,28 @@ verify technical claims against primary post-mortems and on-chain traces.
 - Chainstack — Base RPC Providers 2026: https://chainstack.com/base-rpc-providers-2026/
 - Messari — State of the OP Stack Q1 2026: https://messari.io/report/state-of-the-op-stack-q1-2026
 
-## To add (primary sources — TODO)
-- [ ] Trail of Bits building-secure-contracts + not-so-smart-contracts
-- [ ] Solodit aggregated findings
-- [ ] Code4rena public report archive
+## Exploit recompilation pipeline — primary spine (software-only)
+
+The canonical, reliable sources Onyx mines to recompile past software exploits into
+case studies + catalog detectors (see `docs/research-plans/onyx-exploit-recompile.md`).
+Scope is **software/code bugs only** — exclude ops, key-compromise, social-engineering,
+governance takeover, and supply-chain incidents.
+
+- **DeFiHackLabs (primary)** — 691+ incidents reproduced as runnable Foundry PoCs, one
+  per real on-chain hack, each linking the original post-mortem/tx. Chronological
+  `past/<YYYY>/` folders; naming `YYYYMMDD_Project---vuln-type`. This is the spine:
+  PoC + source already exist, so each entry converts directly into an Aegis case study
+  + reusable technique. https://github.com/SunWeb3Sec/DeFiHackLabs
+- **DeFiVulnLabs** — distilled common vuln *patterns* as minimal Foundry tests; the
+  "reusable technique" reference for generalizing an incident into a detector.
+  https://github.com/SunWeb3Sec/DeFiVulnLabs
+- **Solodit (Cyfrin)** — aggregated audit-report findings across firms (incl. bugs that
+  never became live exploits). Audit-finding dimension; already backs
+  `checklists/solodit-aggregated-checklist.md`. https://solodit.cyfrin.io
+- **Code4rena report archive** — public contest findings with severity + PoC.
+  https://code4rena.com/reports  (org repos: https://github.com/code-423n4)
+- **Trail of Bits — not-so-smart-contracts / building-secure-contracts** — annotated
+  vulnerable patterns. https://github.com/crytic/building-secure-contracts
+- **rekt.news leaderboard** — cross-check losses & timelines. https://rekt.news/leaderboard
+
+Done: [x] Solodit · [x] Code4rena archive · [x] Trail of Bits not-so-smart-contracts
