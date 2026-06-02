@@ -7,6 +7,16 @@ then **promotes** it into the real repo (`docs/exploits/`, `catalog/exploits.yam
 
 The work order Onyx follows: **[`../docs/research-plans/onyx-exploit-recompile.md`](../docs/research-plans/onyx-exploit-recompile.md)**.
 
+## Guardrails (enforced, not just convention)
+Onyx writes files only — **never runs `git`/`gh`**. This checkout enforces that:
+- A `pre-commit` hook rejects any commit touching paths outside `intake/`/`research-log/`.
+- A `pre-push` hook blocks all pushes (reviewer-only).
+- GitHub ruleset `protect-main` blocks force-push/deletion of `main`; secret-scanning
+  push protection is on.
+Reviewer promoting reviewed work bypasses the local hooks with `AEGIS_PROMOTE=1`
+(commit) and `AEGIS_PUSH=1` (push). The hooks live in `.git/hooks/` (local to this
+machine, not version-controlled).
+
 ## Scope (hard filter): software bugs only
 Accept only **code-level** vulnerabilities (OWASP SC01–SC10). **Reject** and skip:
 private-key/multisig compromise, social engineering, governance takeover, frontend/
