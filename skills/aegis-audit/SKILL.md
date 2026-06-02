@@ -7,7 +7,24 @@ description: >
   against known exploits, hunt for vulnerabilities, triage a bounty target, or
   reproduce a suspected bug. Loads catalog/exploits.yaml and sweeps the target
   against every known exploit before going deep.
+version: 1.0.0
+author: novaondesk
+license: MIT
+prerequisites:
+  commands: [forge, slither, semgrep]
+metadata:
+  hermes:
+    category: security
+    tags: [security-audit, smart-contracts, defi, exploit-analysis, solidity, foundry, vulnerability-detection, web3]
+    related_skills: []
 ---
+
+> **Reference files resolve relative to the repo root** (`../../catalog/…`,
+> `../../checklists/…`, `../../poc/`). Run this skill from a checkout of the Aegis
+> repo, or register it in place (Hermes: add `<repo>/skills` to `skills.external_dirs`)
+> — a bare copy of just this directory will not find the catalog. Tools: `forge`
+> drives EVM PoCs; `slither`/`semgrep` accelerate TRIAGE if installed (the sweep is
+> reasoning-first and still works without them, EVM PoCs aside).
 
 # Aegis — Exploit-Catalog Audit
 
