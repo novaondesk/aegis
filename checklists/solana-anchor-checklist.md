@@ -183,6 +183,28 @@ Each item is a yes/no question + the code smell + a real exploit that maps to it
   - **Mitigation:** Per-asset collateral factors, isolation modes (limit what can be
     borrowed against volatile collateral), debt ceilings per collateral type
 
+### CPI-Based Price Feed Validation
+- [ ] When pricing collateral/assets via CPI to an external program, is the target program
+  ID validated against a hardcoded known-good value?
+  - **Code smell:** CPI to a user-supplied program account for pricing/exchange rate data
+    without checking `program.key() == KNOWN_PROGRAM_ID`
+  - **Exploit:** Loopscale ($5.8M) — attacker passed a malicious program as the RateX
+    program, which returned inflated PT exchange rates, enabling undercollateralized loans
+  - **Mitigation:** Hardcode expected program IDs for every pricing CPI; use Anchor
+    `#[account(constraint = ratex_program.key() == RATEX_PROGRAM_ID)]` or explicit
+    `require!()` checks before CPI
+
+### Integration Consistency
+- [ ] When adding support for a new collateral type or external integration, are all
+  existing validation checks (program ID, account constraints, health check logic)
+  consistently applied?
+  - **Code smell:** New collateral adapter added without the same validation pattern as
+    existing adapters (e.g., one type checks program ID, another doesn't)
+  - **Exploit:** Loopscale — RateX PT integration (added March 27) lacked program ID
+    validation that other PT token types had; the inconsistency was the vulnerability
+  - **Mitigation:** Require that every new collateral type passes the same validation
+    checklist; code review should diff new adapters against existing ones for missing checks
+
 ---
 
 ## Sysvar & System Program

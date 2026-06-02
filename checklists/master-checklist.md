@@ -150,6 +150,14 @@ losses.
 - [ ] Is accrued **interest** included in the LTV/health-factor calc? `SOL-Defi-Lending-8`
 - [ ] Borrow + lend (or lend+borrow) the **same token in one tx**? `SOL-Defi-Lending-10`
 - [ ] Can a position become **unrepayable** (locked bad debt)? `SOL-Defi-Lending-12`
+- [ ] When pricing collateral via external calls (CPI, oracle adapters, cross-program
+  queries), is the **external source identity validated** against a known-good value?
+  (Not just the data — the *source* itself.) *Loopscale: CPI to user-supplied "RateX"
+  program returned inflated PT prices → $5.8M undercollateralized loans.*
+- [ ] If the protocol supports **multiple collateral types**, does each type enforce the
+  **same validation checks** (program ID, account constraints, price bounds)? Inconsistency
+  between adapters is a signal. *Loopscale: RateX adapter (added post-launch) lacked
+  program-ID checks that other PT adapters had.*
 
 ### Liquid Staking Derivatives (LSD)
 - [ ] Exchange-rate repricing sandwichable to drain? `SOL-Defi-LSD-2`
