@@ -3,6 +3,30 @@
 All notable changes to Aegis are documented here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/); versions follow [SemVer](https://semver.org/).
 
+## [2.1.0] — 2026-06-03
+
+Fork-simulation capability + catalog growth. Aegis can now prove findings against **forked real
+state** (the real deployed target + its live dependencies), not just minimal models.
+
+### Added
+- **`sim/` fork-simulation harness** — Foundry project that forks a chain at a pinned block and
+  exploits the live target; you deploy only the attacker. Reuses `poc/`'s forge-std; RPC via a
+  gitignored `.env`. Documented in `sim/README.md` + `skills/aegis-audit/references/fork-simulation.md`.
+- **3 real incident replays** (ground-truth `fork_poc`s, all passing against mainnet state):
+  - Socket Gateway 2024-01 (`approval-drain-arbitrary-call`) — drains a real victim's ~656k USDC.
+  - Audius 2022-07 (`proxy-storage-collision`) — seizes the real governance proxies, drains ~18.56M AUDIO.
+  - DAO Maker 2021-09 (`unprotected-privileged-fn`) — unprotected `init` → `emergencyExit` drains 5.76M DERC.
+  - (Beanstalk 2022-04 multi-protocol flashloan reconstruction is present but `vm.skip`'d — WIP.)
+- **`aegis-audit` Phase 5 gains a Fork-PROVE mode** for deployed targets.
+- **3 catalog entries ported to coded PoCs** from Nova's PR #9 studies: `trustedvolumes-access-control`,
+  `verus-bridge-merkle-forgery`, `kelp-dao-layerzero-dvn-1-1` (catalog 24 coded / 2 studied).
+
+### Changed
+- README repo-layout + PROVE step now reference `sim/`; the three replayed catalog entries point
+  their `fork_poc` at the real `sim/` replays.
+
+[2.1.0]: https://github.com/novaondesk/aegis/releases/tag/v2.1.0
+
 ## [2.0.0] — 2026-06-03
 
 Catalog expansion release: **+11 distinct exploit detector classes** mined from
