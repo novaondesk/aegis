@@ -38,6 +38,15 @@ Legend: 🤖 = an automated tool/rule can flag candidates · 👁 = needs human 
       before asset-affecting changes take effect**, giving users time to exit? Or can
       `cutBip()` / `execute()` drain assets atomically?
       *Beanstalk: `cutBip()` executed immediately via Diamond proxy, no grace period.*
+- [ ] 👁 **SC02-SWAP-1:** For multi-hop swap routes (margin opening, collateral conversion,
+      flash loan repayment), is `min_amount_out` validated only on the **terminal output
+      token**, or is it accumulated across intermediate hops? Summing intermediate values
+      inflates the validated minimum, allowing positions to pass safety checks with
+      fabricated routes. Also: does post-swap validation compare actual output against the
+      validated minimum, or does it credit whatever arrives?
+      *Rhea Finance: $18.4M — `get_token_out()` summed all `min_amount_out` values
+      including intermediate hops, inflating the validated minimum 4.1M×. Post-swap
+      `on_open_trade_return()` credited whatever arrived without re-checking.*
 
 ## SC03 — Price Oracle Manipulation 👁🤖
 - [ ] Is any price derived from a **spot** AMM reserve / `getReserves` / `balanceOf`
