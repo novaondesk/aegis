@@ -45,10 +45,14 @@ interface IAaveLendingPool {
 }
 
 interface ICurvePool {
-    function add_liquidity(uint256[2] memory amounts, uint256 minMint) external returns (uint256);
-    function add_liquidity(uint256[3] memory amounts, uint256 minMint) external returns (uint256);
-    function remove_liquidity_one_coin(uint256 amount, int128 i, uint256 minAmount) external returns (uint256);
-    function remove_liquidity_imbalance(uint256[3] memory amounts, uint256 maxBurn) external returns (uint256);
+    // NOTE: declared void — the original 3pool's add_liquidity / remove_liquidity_* return NOTHING
+    // (2020-era Vyper), so a `returns (uint256)` interface reverts decoding empty returndata. A void
+    // external call ignores any returndata, so this is also safe for the factory metapool (which
+    // does return a uint256). We read resulting balances via balanceOf instead.
+    function add_liquidity(uint256[2] memory amounts, uint256 minMint) external;
+    function add_liquidity(uint256[3] memory amounts, uint256 minMint) external;
+    function remove_liquidity_one_coin(uint256 amount, int128 i, uint256 minAmount) external;
+    function remove_liquidity_imbalance(uint256[3] memory amounts, uint256 maxBurn) external;
 }
 
 interface IBeanstalk {
@@ -87,14 +91,10 @@ contract BeanstalkGovFlashloanReplayTest is Test {
     }
 
     function test_realBeanstalk_flashloanGovernanceDrain() public {
-        // WIP / skipped: the full reconstruction below runs Aave + 3pool + the Bean3CRV factory
-        // metapool + the Beanstalk diamond. It currently reverts when approving the Bean3CRV LP —
-        // that pool is a Curve *factory* metapool (an EIP-1167 minimal proxy to a Vyper impl) and
-        // its `approve` reverts under fork; resolving it needs more ABI/state work. Kept as the
-        // marquee multi-protocol target. The harness itself is proven by the 3 passing replays
-        // (Socket / Audius / DAO Maker). Remove this skip once the metapool interaction is fixed.
-        vm.skip(true);
-
+        // Marquee multi-protocol replay: drives Aave v2 + Curve (3pool + Bean3CRV factory metapool)
+        // + the live Beanstalk diamond, all on the fork. Gotcha worth noting: the original 3pool's
+        // add_liquidity / remove_liquidity_* return NOTHING, so the Curve interface must be declared
+        // void or Solidity reverts decoding empty returndata.
         vm.createSelectFork(vm.rpcUrl("mainnet"), ATTACK_BLOCK);
         vm.deal(address(this), 100 ether);
 

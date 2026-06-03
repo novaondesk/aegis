@@ -12,11 +12,12 @@ state** (the real deployed target + its live dependencies), not just minimal mod
 - **`sim/` fork-simulation harness** — Foundry project that forks a chain at a pinned block and
   exploits the live target; you deploy only the attacker. Reuses `poc/`'s forge-std; RPC via a
   gitignored `.env`. Documented in `sim/README.md` + `skills/aegis-audit/references/fork-simulation.md`.
-- **3 real incident replays** (ground-truth `fork_poc`s, all passing against mainnet state):
+- **4 real incident replays** (ground-truth `fork_poc`s, all passing against mainnet state):
   - Socket Gateway 2024-01 (`approval-drain-arbitrary-call`) — drains a real victim's ~656k USDC.
   - Audius 2022-07 (`proxy-storage-collision`) — seizes the real governance proxies, drains ~18.56M AUDIO.
   - DAO Maker 2021-09 (`unprotected-privileged-fn`) — unprotected `init` → `emergencyExit` drains 5.76M DERC.
-  - (Beanstalk 2022-04 multi-protocol flashloan reconstruction is present but `vm.skip`'d — WIP.)
+  - Beanstalk 2022-04 (`beanstalk-governance-flashloan`) — flash-loans ~$1B (Aave) into the silo for
+    an instant supermajority, `emergencyCommit`s a malicious BIP, drains the protocol, nets ~$42M USDC.
 - **`aegis-audit` Phase 5 gains a Fork-PROVE mode** for deployed targets.
 - **3 catalog entries ported to coded PoCs** from Nova's PR #9 studies: `trustedvolumes-access-control`,
   `verus-bridge-merkle-forgery`, `kelp-dao-layerzero-dvn-1-1` (catalog 24 coded / 2 studied).

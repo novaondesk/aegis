@@ -112,7 +112,7 @@ integration notes in [`docs/methodology/security-tooling-landscape.md`](docs/met
 | `checklists/` | Exploit-justified per-class review checklists |
 | `tools/` | Slither config, semgrep rules, Foundry invariant templates |
 | `poc/` | Runnable Foundry PoCs — minimal *models* of catalog patterns (vulnerable + safe + test) |
-| `sim/` | **Fork-simulation** — exploit the *real deployed target* on a forked chain (the PROVE phase for live targets); 3 real incident replays |
+| `sim/` | **Fork-simulation** — exploit the *real deployed target* on a forked chain (the PROVE phase for live targets); 4 real incident replays |
 | `research-log/` | Dated log of what we looked at and found |
 
 ## Contributing (agents & humans)
@@ -138,11 +138,12 @@ See [`CHANGELOG.md`](CHANGELOG.md) and [`research-log/`](research-log/).
   agent-driven. v2.0.0 added 11 DeFiHackLabs-mined classes; v2.1.0 added Nova's 5 May-2026 studies
   (3 coded) and the fork-simulation capability.
 - **Fork-simulation (`sim/`):** prove findings against *real deployed targets* on a forked chain.
-  3 real incident replays pass against mainnet state — Socket Gateway (approval drain, ~656k USDC),
-  Audius (proxy storage collision, ~18.56M AUDIO), DAO Maker (unprotected init, 5.76M DERC).
+  4 real incident replays pass against mainnet state — Socket Gateway (approval drain, ~656k USDC),
+  Audius (proxy storage collision, ~18.56M AUDIO), DAO Maker (unprotected init, 5.76M DERC), and
+  Beanstalk (flashloan governance, ~$42M USDC profit on a ~$1B Aave loan).
 - **Skills:** `aegis-audit` (red — catalog sweep + general engines + scored PoC report, now with a
   Fork-PROVE mode) and `aegis-defender` (blue — fixes proven by `Safe<X>`, deploy/upgrade release-gate).
 - **Pattern library:** OWASP SC Top 10 (2026) taxonomy; 370-item Solodit EVM backstop;
   exploit-justified front-line checklist with archetype playbooks.
-- **Next:** point fork-sim at a live in-scope target (RECON → sweep → fork-PROVE); land the marquee
-  Beanstalk multi-protocol replay; native Solana/Move harnesses for non-EVM targets.
+- **Next:** point fork-sim at a live in-scope target (RECON → sweep → fork-PROVE); native
+  Solana/Move harnesses for non-EVM targets.
