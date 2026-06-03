@@ -23,6 +23,7 @@ forge test -vvv               # forge-std is reused from ../poc/lib (see foundry
 | `test/ForkSanity.t.sol` | Harness shake-out: forks Ethereum at a pinned block, reads real USDC state, funds an attacker via `deal`. If this passes, forking works. |
 | `test/SocketApprovalDrain_2024_01.t.sol` | **Real incident replay** — Socket Gateway approval drain (2024-01, ~$3.3M). Forks at block 19,021,453 and drains a real victim's ~656k USDC through the real gateway's malicious route. Ground-truth instance of catalog `approval-drain-arbitrary-call`. |
 | `test/AudiusGovTakeover_2022_07.t.sol` | **Real incident replay** — Audius governance takeover (2022-07, ~$1.08M). Forks at block 15,201,793; the storage-collision re-initializer lets the attacker seize the real Governance/Staking/DelegateManager proxies and pass a proposal transferring 99% (~18.56M) of the AUDIO treasury. Ground-truth instance of catalog `proxy-storage-collision`. |
+| `test/DaoMakerInitDrain_2021_09.t.sol` | **Real incident replay** — DAO Maker vesting unprotected `init` (2021-09). Forks at block 13,155,320; anyone could call `init()` (no once-guard) to become owner, then `emergencyExit` drains the held tokens (5.76M DERC). Ground-truth instance of catalog `unprotected-privileged-fn`. |
 
 ## Writing a new replay / target audit
 1. Pin the block: historical incident → the block *before* the attack tx; live audit → a recent block.
