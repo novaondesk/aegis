@@ -21,6 +21,14 @@ before pointing it at a live target (user decision).
   - Public facts (addresses/block/route id) cross-referenced from post-mortems + the local
     DeFiHackLabs index; exploit calldata reconstructed from the route ABI, not copied.
 
+- **Second real replay** (`test/AudiusGovTakeover_2022_07.t.sol`): forks ETH at block
+  **15,201,793** and reproduces the Audius governance takeover (2022-07). The storage-collision
+  re-initializer lets the attacker seize the REAL Governance/Staking/DelegateManager proxies (point
+  the registry at the attacker, votingPeriod=3, 1% quorum, guardian=self), fake-stake for voting
+  power, and pass a proposal transferring **99% (~18.56M) of the AUDIO treasury**. Ground-truth for
+  catalog `proxy-storage-collision`; its `fork_poc` now points here. Confirms the harness generalizes
+  to a second, different class (governance/proxy, not just approval-drain).
+
 ## Wired
 - `aegis-audit` SKILL Phase 5 gained a **Fork-PROVE mode** note + new reference
   `references/fork-simulation.md` (the loop, cheatcodes, scope/ethics, limits).
