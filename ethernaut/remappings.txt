@@ -1,0 +1,3 @@
+forge-std/=../poc/lib/forge-std/src/
+openzeppelin-contracts-08/=src/vendor/oz/
+openzeppelin-contracts-06/=src/vendor/oz06/

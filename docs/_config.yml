@@ -1,0 +1,10 @@
+title: Aegis
+description: Exploit-catalog-driven smart contract security auditing — find the bug, prove the fix.
+theme: jekyll-theme-cayman
+# Served from the main branch /docs folder. Only front-matter'd pages (index, ethernaut-wargame)
+# render as site pages; the deep docs are linked out to the GitHub repo (which renders them).
+exclude:
+  - exploits/
+  - methodology/
+  - research-plans/
+  - vuln-classes/

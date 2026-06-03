@@ -1,0 +1,17 @@
+# Aegis x Ethernaut — wargame harness.
+#
+# Tests Aegis on OpenZeppelin's Ethernaut CTF: each level is exploited LOCALLY in Foundry
+# (deploy the real level contract, run the catalog-identified exploit, assert the level's
+# win condition). This is the Aegis loop — RECON (level source) -> SWEEP (catalog) ->
+# PROVE (exploit) -> win — minus the wallet/testnet of the live browser game.
+#
+# Level sources under src/levels/ are vendored verbatim from github.com/OpenZeppelin/ethernaut
+# (MIT). evm_version=paris keeps classic SELFDESTRUCT semantics (levels predate Cancun/EIP-6780).
+[profile.default]
+src = "src"
+test = "test"
+libs = ["../poc/lib"]            # reuse forge-std vendored for poc/
+auto_detect_solc = true          # levels span ^0.6 / <0.7 / ^0.8
+evm_version = "paris"
+optimizer = true
+optimizer_runs = 200

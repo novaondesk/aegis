@@ -3,6 +3,30 @@
 All notable changes to Aegis are documented here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/); versions follow [SemVer](https://semver.org/).
 
+## [2.2.0] — 2026-06-03
+
+Independent benchmark + documentation site. Aegis is validated against a third-party CTF, and the
+docs are published.
+
+### Added
+- **`ethernaut/` wargame harness** — Aegis solves OpenZeppelin's Ethernaut CTF **5/5** using only
+  the catalog sweep (RECON → SWEEP → PROVE), each level exploited locally in Foundry against the real
+  level contract:
+  - #3 CoinFlip → `insecure-randomness`; #6 Delegation → `proxy-storage-collision`;
+    #10 Reentrance → `read-only-reentrancy` (SC08 family); #22 Dex → `loopscale-oracle-spot-price`
+    (price-manipulation family); #25 Motorbike → `unprotected-privileged-fn`.
+- **Wargame report** — [`docs/ethernaut-wargame.md`](docs/ethernaut-wargame.md): per level, the
+  matched detector, the exact `applies_when` signals that held, the root cause, and the proof. Shows
+  the same detectors span CTF and mainnet (Delegation↔Audius, Dex↔Mango/Loopscale, Motorbike↔DAO Maker).
+- **GitHub Pages docs site** (`docs/_config.yml` + `docs/index.md`, cayman theme) at
+  https://novaondesk.github.io/aegis/ .
+
+### Notes
+- One honest gap surfaced: Reentrance maps to the SC08 *family*, not an exact entry — a
+  state-changing CEI-reentrancy detector is a tracked catalog follow-up.
+
+[2.2.0]: https://github.com/novaondesk/aegis/releases/tag/v2.2.0
+
 ## [2.1.0] — 2026-06-03
 
 Fork-simulation capability + catalog growth. Aegis can now prove findings against **forked real
