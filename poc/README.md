@@ -38,6 +38,7 @@ forge test -vv
 | `test/TrustedVolumesAccess.t.sol` | SC01 | TrustedVolumes RFQ access control ($6.7M): a `public` `setAuthorizedSigner` lets an attacker authorize themselves and sign draining orders; `onlyOwner` on the setter holds. |
 | `test/VerusMerkleForgery.t.sol` | SC02 | Verus bridge Merkle forgery ($11.6M): verifying a withdrawal against a caller-supplied root that was never authenticated lets an attacker submit their own tree; requiring a relayer-committed root holds. |
 | `test/KelpDvnThreshold.t.sol` | X01 | Kelp DAO single-DVN drain ($292M): a 1-of-1 verifier threshold lets one compromised/forged attestation authorize a release; requiring ≥2 distinct verifiers holds. |
+| `test/CeiReentrancy.t.sol` | SC08 | State-changing CEI reentrancy (The DAO class): `withdraw` sends ETH before decrementing balance, so a re-entrant `receive()` drains the contract; CEI ordering + a reentrancy lock hold. |
 
 Run one: `forge test --match-contract InflationAttack -vv`
 

@@ -138,7 +138,7 @@ detector → log.
 ## Status — v2.1.0
 
 See [`CHANGELOG.md`](CHANGELOG.md) and [`research-log/`](research-log/).
-- **Catalog:** 26 exploit detectors (24 with runnable model PoCs, 2 studied), machine-readable +
+- **Catalog:** 27 exploit detectors (25 with runnable model PoCs, 2 studied), machine-readable +
   agent-driven. v2.0.0 added 11 DeFiHackLabs-mined classes; v2.1.0 added Nova's 5 May-2026 studies
   (3 coded) and the fork-simulation capability.
 - **Fork-simulation (`sim/`):** prove findings against *real deployed targets* on a forked chain.
