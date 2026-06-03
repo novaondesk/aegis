@@ -23,6 +23,30 @@ Legend: 🤖 = an automated tool/rule can flag candidates · 👁 = needs human 
       paused, post-migration) to extract value?
 - [ ] Governance: can a proposal be created + executed within one tx / one block?
       *Beanstalk: flash-loan → supermajority → drain.*
+- [ ] 👁 **SC02-GOV-1:** Is governance voting power computed from **snapshots at proposal
+      creation** or from **real-time balances**? If real-time, flash-loan-acquired tokens
+      can swing votes atomically. Check if `vote()` or `emergencyCommit()` reads
+      Roots/Stalk/voting-power from current storage vs a snapshot block.
+      *Beanstalk: $181M — flash-loaned $1B in LP → deposited for Roots → supermajority
+      vote → emergency commit → drain, all in one tx.*
+- [ ] 👁 **SC02-GOV-2:** Is there a **minimum delay** between proposal submission and
+      execution that exceeds the time needed for tokenholders to detect and react (e.g.,
+      7 days, not 1 day)? Can the delay be bypassed via `emergencyCommit` or fast-track?
+      *Beanstalk: 1-day emergency delay was insufficient; attacker pre-submitted the
+      malicious proposal 24 hours before, then executed in one atomic tx.*
+- [ ] 👁 **SC02-GOV-3:** After a governance proposal executes, is there a **timelock
+      before asset-affecting changes take effect**, giving users time to exit? Or can
+      `cutBip()` / `execute()` drain assets atomically?
+      *Beanstalk: `cutBip()` executed immediately via Diamond proxy, no grace period.*
+- [ ] 👁 **SC02-SWAP-1:** For multi-hop swap routes (margin opening, collateral conversion,
+      flash loan repayment), is `min_amount_out` validated only on the **terminal output
+      token**, or is it accumulated across intermediate hops? Summing intermediate values
+      inflates the validated minimum, allowing positions to pass safety checks with
+      fabricated routes. Also: does post-swap validation compare actual output against the
+      validated minimum, or does it credit whatever arrives?
+      *Rhea Finance: $18.4M — `get_token_out()` summed all `min_amount_out` values
+      including intermediate hops, inflating the validated minimum 4.1M×. Post-swap
+      `on_open_trade_return()` credited whatever arrived without re-checking.*
 
 ## SC03 — Price Oracle Manipulation 👁🤖
 - [ ] Is any price derived from a **spot** AMM reserve / `getReserves` / `balanceOf`
