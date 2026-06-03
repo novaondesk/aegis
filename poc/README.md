@@ -35,6 +35,9 @@ forge test -vv
 | `test/UnverifiedCallback.t.sol` | SC05/SC01 | Unverified flash-loan/external callback: an `onFlashLoan` callback with no `msg.sender`/`initiator` check is called directly to drain working capital; caller + initiator checks hold. |
 | `test/BridgeNoCodeToken.t.sol` | SC02 | Bridge no-code-token deposit (Qubit $80M): a low-level `transferFrom` to a codeless address returns success, so the bridge credits a deposit that never moved; a code-existence + allow-list check holds. |
 | `test/FirstDepositSkim.t.sol` | SC07 | AMM-pair first-deposit skim (UniV2-fork): no `MINIMUM_LIQUIDITY` lock lets the first LP donate to inflate share price so a later LP mints zero LP and is skimmed; locking `MINIMUM_LIQUIDITY` + `require(liquidity>0)` hold. |
+| `test/TrustedVolumesAccess.t.sol` | SC01 | TrustedVolumes RFQ access control ($6.7M): a `public` `setAuthorizedSigner` lets an attacker authorize themselves and sign draining orders; `onlyOwner` on the setter holds. |
+| `test/VerusMerkleForgery.t.sol` | SC02 | Verus bridge Merkle forgery ($11.6M): verifying a withdrawal against a caller-supplied root that was never authenticated lets an attacker submit their own tree; requiring a relayer-committed root holds. |
+| `test/KelpDvnThreshold.t.sol` | X01 | Kelp DAO single-DVN drain ($292M): a 1-of-1 verifier threshold lets one compromised/forged attestation authorize a release; requiring ≥2 distinct verifiers holds. |
 
 Run one: `forge test --match-contract InflationAttack -vv`
 
