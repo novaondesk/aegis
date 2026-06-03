@@ -170,6 +170,22 @@ Legend: 🤖 = an automated tool/rule can flag candidates · 👁 = needs human 
 ## Weak randomness 🤖
 - [ ] `block.timestamp`/`blockhash`/`prevrandao` used for anything valuable? (use VRF)
 
+## X04 — Cryptographic / TSS 👁 (threshold signatures, key management)
+- [ ] 👁 **X04-TSS:** For protocols using threshold signatures (GG20, FROST, DKLS): Is the
+      TSS library current with upstream? Are all cryptographic proofs (MOD, FAC, MtA)
+      verified during key generation? Check for CVE-2023-33241 / TSSHOCK in any GG20
+      implementation. *THORChain: $10.8M — tss-lib fork was 3 years behind upstream,
+      skipped MOD/FAC proof checks. Malicious node registered malformed Paillier modulus,
+      extracted key share residues from signing rounds, reconstructed vault private key.*
+- [ ] 👁 **X04-TSS-SYBIL:** For permissionless node/operator bonding in TSS-based systems:
+      Is there Sybil resistance beyond economic stake? Can an attacker bond the minimum,
+      churn into the active set, and become a co-signer with no reputation/history check?
+      *THORChain: attacker bonded 635K RUNE, churned in within days, no history check.*
+- [ ] 👁 **X04-TSS-AUDIT:** Has the TSS library been audited **after** the latest known
+      CVE disclosure for that cryptographic scheme? Pre-CVE audits are stale — the
+      vulnerability class they missed is the one that gets exploited. *THORChain:
+      Trail of Bits audit predated CVE-2023-33241 disclosure by months.*
+
 ---
 
 ---

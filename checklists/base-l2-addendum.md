@@ -148,6 +148,34 @@ Legend: 🤖 = an automated tool/rule can flag candidates · 👁 = needs human 
 
 ---
 
+## Cross-Chain Vault & TSS Security 👁
+
+### Threshold Signature Key Management
+- [ ] 👁 If the protocol uses TSS (GG20, FROST, DKLS) for cross-chain vault management:
+  Is the TSS library current with upstream security patches? Check for CVE-2023-33241 /
+  TSSHOCK in any GG20 implementation.
+  - **Code smell:** Forked TSS library without tracking upstream security releases
+  - **Exploit:** Malicious co-signer registers malformed Paillier modulus, extracts key
+    share residues from signing rounds, reconstructs vault private key
+  - **THORChain: $10.8M across 10 chains including Base — tss-lib fork was 3 years
+    behind upstream, skipped MOD/FAC proof checks**
+  - **Mitigation:** Track upstream releases, verify MOD/FAC proofs in key generation,
+    consider migrating to newer schemes (DKLS, FROST)
+
+### Multi-Chain Drain Vectors
+- [ ] 👁 For protocols with vaults on Base and other chains: Can a single compromised
+  key authorize outbound transactions on all chains simultaneously? Is there per-chain
+  quorum or rate limiting?
+  - **Code smell:** Single TSS key controls vaults on multiple chains with no per-chain
+    authorization checks
+  - **Exploit:** Compromising one key drains all chains atomically
+  - **THORChain: attacker signed unauthorized outbound txs across 10 chains from one
+    compromised vault key — no per-chain quorum**
+  - **Mitigation:** Per-chain quorum requirements, rate limits on outbound volume,
+    anomaly detection on unusual withdrawal patterns
+
+---
+
 ## Sources
 - [OP Stack Docs: Cross-Domain Overview](https://docs.optimism.io/op-stack/bridging/cross-domain)
 - [OP Stack Specs: Messengers](https://specs.optimism.io/protocol/messengers.html)
