@@ -38,16 +38,18 @@ deep-dive case study + runnable PoC.
 |---|---|---|---|
 | ERC-4626 share-inflation | SC07/SC02 | EVM | ✅ coded PoC |
 | Read-only reentrancy (Curve class) | SC08 | EVM | ✅ coded PoC |
-| Balancer V2 rounding ($128M) | SC07 | EVM (6 chains) | 📄 studied |
-| Cashio infinite-mint ($52.8M) | SC05/SC02 | Solana | 📄 studied |
-| Cetus CLMM overflow ($223M) | SC07/SC09 | Sui/Move | 📄 studied |
-| Loopscale spot-price oracle ($5.8M) | SC03/SC02 | Solana | 📄 studied |
-| Loopscale unvalidated CPI ($5.8M) | SC03/SC05 | Solana | 📄 studied |
-| Mango oracle manipulation ($114M) | SC03/SC02 | Solana | 📄 studied |
+| Balancer V2 rounding ($128M) | SC07 | EVM (6 chains) | ✅ coded PoC |
+| Cashio infinite-mint ($52.8M) | SC05/SC02 | Solana (EVM model) | ✅ coded PoC |
+| Cetus CLMM overflow ($223M) | SC07/SC09 | Sui/Move (EVM model) | ✅ coded PoC |
+| Loopscale spot-price oracle ($5.8M) | SC03/SC02 | Solana (EVM model) | ✅ coded PoC |
+| Loopscale unvalidated CPI ($5.8M) | SC03/SC05 | Solana (EVM model) | ✅ coded PoC |
+| Mango oracle manipulation ($114M) | SC03/SC02 | Solana (EVM model) | ✅ coded PoC |
 | Beanstalk governance flash-loan ($181M) | SC02/SC04 | EVM | ✅ coded PoC |
 | Rhea Finance multi-hop slippage ($18.4M) | SC02/SC07 | NEAR (EVM model) | ✅ coded PoC |
 
-`coded` = runnable PoC in [`poc/`](poc/); `studied` = deep-dive case study, PoC not yet ported.
+`coded` = runnable PoC in [`poc/`](poc/). *(EVM model)* = the incident was on a non-EVM
+chain (Solana/Move/NEAR) and the PoC reproduces the same broken invariant in Solidity, so
+it runs in the Foundry harness; a native Anchor/Move port is the fidelity follow-up.
 
 ## Use it as an agent skill
 
@@ -106,9 +108,9 @@ detector → log.
 ## Status — v1.0.0
 
 First stable release. See [`CHANGELOG.md`](CHANGELOG.md) and [`research-log/`](research-log/).
-- **Catalog:** 10 exploit detectors (4 with coded PoCs), machine-readable + agent-driven.
+- **Catalog:** 10 exploit detectors, all with runnable PoCs, machine-readable + agent-driven.
 - **Skill:** `aegis-audit` runs the catalog sweep end to end.
 - **Pattern library:** OWASP SC Top 10 (2026) taxonomy; 370-item Solodit EVM backstop;
   exploit-justified front-line checklist with archetype playbooks.
-- **Next:** port `studied` Solana/Move entries to coded PoCs; grow the catalog per the
-  research day-plans.
+- **Next:** port the EVM-modelled Solana/Move PoCs to native Anchor/Move harnesses for
+  full fidelity; grow the catalog per the research day-plans.
