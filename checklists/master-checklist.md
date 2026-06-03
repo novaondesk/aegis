@@ -212,6 +212,18 @@ losses.
 - [ ] Callback functions verify the **caller** address? (fake-pool callback drain) `SOL-Defi-AS-12`
 - [ ] Fee-on-transfer / rebasing / non-18-decimal tokens handled? `SOL-Defi-AS-9`,`-10`,`-8`
 - [ ] Rounding in the constant-product / invariant formula. `SOL-Defi-AS-5`
+- [ ] Does any pay/settle function forward arbitrary trailing calldata to a callback
+  (via `calldatacopy`) and verify only its own balance delta? A malicious callback
+  can use pre-existing third-party approvals to fund the repayment — the protocol
+  becomes a drain rail. `SC02-CB-1` *Ekubo: $1.4M via callback calldata injection
+  (2026-05-05). SwapNet: $17M calldata injection (2026-01-25).*
+- [ ] In flash-accounting / callback-based routers, does the repayment verification
+  check the *source* of funds (e.g., `msg.sender` balance change) or only the
+  *contract's* balance? If only the latter, any approved contract can be
+  weaponized as a drain rail. `SC02-CB-2`
+- [ ] Does the callback interface allow the caller to inject arbitrary recipient/
+  amount parameters via forwarded calldata that get passed to `transferFrom`?
+  If so, standing approvals to the callback contract create a drain vector. `SC02-CB-3`
 
 ### Lending / Borrowing
 - [ ] Does liquidation work during rapid downturns / when paused / when resumed? `SOL-Defi-Lending-1`,`-4`,`-5`
