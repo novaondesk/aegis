@@ -129,6 +129,14 @@ For a `coded` catalog entry, its `poc_cmd` is the worked template. Arithmetic/pr
 **Exit:** the vulnerable test passes (exploit reproduced) **and** the safe test passes
 (fix proven). A hypothesis without a passing PoC stays a hypothesis.
 
+> **Fork-PROVE mode (real targets):** when auditing a *deployed* target rather than a
+> pattern, prove against forked real state instead of a hand-built model — see
+> [`../../sim/`](../../sim/) and [`references/fork-simulation.md`](references/fork-simulation.md).
+> Fork the chain at a pinned block (`vm.createSelectFork`), deploy only your attacker, and
+> drive the exploit against the live target + its real dependencies (oracles, pools, approvals).
+> A finding is confirmed when the catalog entry's `invariant` breaks and the attacker profits
+> on the fork. This is also how a catalog entry earns a real `fork_poc` (vs. a model PoC).
+
 ### Phase 6 — SCORE & REPORT
 **Entry:** PoC-backed findings exist.
 **Actions:** score each finding's confidence (`references/confidence-scoring.md`) and write
