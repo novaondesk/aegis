@@ -3,36 +3,46 @@
 **Exploit-catalog-driven smart contract security auditing.**
 
 Aegis evaluates a target contract or protocol against a curated catalog of *studied,
-real-world DeFi exploits* — so you can find vulnerabilities and fix them before an
-attacker does. Every studied exploit becomes a structured **detector**; auditing a
-target means sweeping it against the whole catalog, then proving each hit with a
-runnable PoC.
+real-world DeFi exploits* — so you can find vulnerabilities **and prove the fix** before
+an attacker does. Every studied exploit becomes a structured **detector**; auditing a
+target means sweeping it against the whole catalog, proving each hit with a runnable PoC,
+then shipping a fix that's proven by a `Safe<X>` PoC defeating the same exploit. Two
+composable agent skills: **`aegis-audit`** (red team) and **`aegis-defender`** (blue team).
 
 > The durable asset is the **catalog**, not any one scanner. Tools narrow the haystack;
 > the catalog tells you exactly which known attacks to check, and a PoC tells you
 > whether the target is actually vulnerable.
 
-## The approach (target → finding)
+## The approach (target → finding → fix)
 
 ```
-1. RECON   pull source (or decompile via heimdall-rs); pin chain + archetype
-2. SWEEP   evaluate the target against EVERY catalog entry whose archetype fits.
-           Each entry's `applies_when` preconditions are checked against the code →
-           a coverage table of HIGH / MED / N-A verdicts. Nothing studied is skipped.
-3. REVIEW  walk the exploit-derived checklist for what the catalog doesn't cover
-4. PROVE   write a Foundry/Anchor/Move PoC that breaks the entry's invariant
-5. REPORT  severity (Immunefi V2.2) + the fix — the point is a safer target
+1. RECON & SCOPE   pull source (or decompile via heimdall-rs); pin chain + archetype;
+                   map roles, trust boundaries, value flows
+2. SWEEP           evaluate the target against EVERY catalog entry whose archetype fits.
+                   Each entry's `applies_when` preconditions + `root_cause` + `variant_queries`
+                   are checked against the code → a coverage table (HIGH/MED/LOW/N-A).
+                   Nothing studied is skipped.
+3. REVIEW          general engines (state-invariant inference + semantic-guard consistency)
+                   + the exploit-derived checklists catch novel bugs the catalog doesn't list
+4. PROVE           Foundry/Anchor/Move PoC that breaks the entry's invariant (vulnerable + safe)
+5. SCORE & REPORT  severity (Immunefi V2.2) + confidence score — lead with the fix
+6. PROTECT         `aegis-defender` turns each finding into a fix proven by a `Safe<X>` PoC,
+                   and release-gates the deploy/upgrade
 ```
 
 The sweep is what makes this repeatable: "we checked all N known exploits against this
-target" is a coverage claim, not a vibe. See [`catalog/README.md`](catalog/README.md).
+target" is a coverage claim, not a vibe. See [`catalog/README.md`](catalog/README.md), and
+[`docs/methodology/prior-art.md`](docs/methodology/prior-art.md) for how Aegis compares to
+DeFiHackLabs / QuillShield / Trail of Bits.
 
 ## The catalog
 
 [`catalog/exploits.yaml`](catalog/exploits.yaml) is the single source of truth. Each
-entry distills a real incident into a detector: the target shapes it applies to, the
-preconditions to check, how to probe, the invariant that breaks, and links to the
-deep-dive case study + runnable PoC.
+entry distills a real incident into a detector: the target shapes it applies to
+(`archetypes`/`chains`), the `applies_when` preconditions, a one-line `root_cause`
+statement, the `variant_queries` grep-family that hunts the bug across a target, the
+`invariant` that breaks, and links to the deep-dive case study, the runnable PoC, and
+(where one exists) a DeFiHackLabs mainnet-fork replay (`fork_poc`).
 
 | Exploit | Class | Chain | Status |
 |---|---|---|---|
