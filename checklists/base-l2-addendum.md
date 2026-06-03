@@ -50,6 +50,16 @@ Legend: 🤖 = an automated tool/rule can flag candidates · 👁 = needs human 
   - **Exploit:** Replay of legitimate cross-domain messages
   - **Mitigation:** Track processed message nonces, reject duplicates
 
+### Cross-Domain Merkle Proof Verification
+- [ ] For cross-chain bridges using Merkle proofs: Is the verification based on a
+  well-audited library (OpenZeppelin MerkleProof)? Are roots sourced from authenticated
+  validator attestations? Can proofs be forged?
+  - **Code smell:** Custom Merkle verification without library; root stored without signature check
+  - **Exploit:** Verus Bridge ($11.6M, May 2026) — forged Merkle proofs accepted as valid
+    cross-chain withdrawal authorization. Similar to Wormhole/Nomad pattern.
+  - **Mitigation:** Use OpenZeppelin MerkleProof; validate roots against signed attestations;
+    implement guardian watchtower for suspicious withdrawals
+
 ---
 
 ## Block & Time Semantics 👁
@@ -135,6 +145,34 @@ Legend: 🤖 = an automated tool/rule can flag candidates · 👁 = needs human 
   - **Code smell:** Assuming cross-chain messages always succeed
   - **Exploit:** Stuck funds, broken state if message fails
   - **Mitigation:** Implement retry mechanisms, timeout handling, user recovery paths
+
+---
+
+## Cross-Chain Vault & TSS Security 👁
+
+### Threshold Signature Key Management
+- [ ] 👁 If the protocol uses TSS (GG20, FROST, DKLS) for cross-chain vault management:
+  Is the TSS library current with upstream security patches? Check for CVE-2023-33241 /
+  TSSHOCK in any GG20 implementation.
+  - **Code smell:** Forked TSS library without tracking upstream security releases
+  - **Exploit:** Malicious co-signer registers malformed Paillier modulus, extracts key
+    share residues from signing rounds, reconstructs vault private key
+  - **THORChain: $10.8M across 10 chains including Base — tss-lib fork was 3 years
+    behind upstream, skipped MOD/FAC proof checks**
+  - **Mitigation:** Track upstream releases, verify MOD/FAC proofs in key generation,
+    consider migrating to newer schemes (DKLS, FROST)
+
+### Multi-Chain Drain Vectors
+- [ ] 👁 For protocols with vaults on Base and other chains: Can a single compromised
+  key authorize outbound transactions on all chains simultaneously? Is there per-chain
+  quorum or rate limiting?
+  - **Code smell:** Single TSS key controls vaults on multiple chains with no per-chain
+    authorization checks
+  - **Exploit:** Compromising one key drains all chains atomically
+  - **THORChain: attacker signed unauthorized outbound txs across 10 chains from one
+    compromised vault key — no per-chain quorum**
+  - **Mitigation:** Per-chain quorum requirements, rate limits on outbound volume,
+    anomaly detection on unusual withdrawal patterns
 
 ---
 

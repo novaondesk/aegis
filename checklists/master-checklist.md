@@ -23,6 +23,7 @@ Legend: 🤖 = an automated tool/rule can flag candidates · 👁 = needs human 
       paused, post-migration) to extract value?
 - [ ] Governance: can a proposal be created + executed within one tx / one block?
       *Beanstalk: flash-loan → supermajority → drain.*
+
 - [ ] 👁 **SC02-GOV-1:** Is governance voting power computed from **snapshots at proposal
       creation** or from **real-time balances**? If real-time, flash-loan-acquired tokens
       can swing votes atomically. Check if `vote()` or `emergencyCommit()` reads
@@ -47,6 +48,21 @@ Legend: 🤖 = an automated tool/rule can flag candidates · 👁 = needs human 
       *Rhea Finance: $18.4M — `get_token_out()` summed all `min_amount_out` values
       including intermediate hops, inflating the validated minimum 4.1M×. Post-swap
       `on_open_trade_return()` credited whatever arrived without re-checking.*
+
+- [ ] 🤖 **SC02-AC:** Is every function that modifies access-control state (whitelists,
+      role mappings, authorized-signer lists) restricted to admin/trusted callers?
+      Check for `public` visibility on setter functions for `mapping(address => bool)`
+      patterns. *TrustedVolumes: $6.7M — `setAuthorizedSigner` was public with no modifier,
+      attacker added self to whitelist, forged trade orders.*
+- [ ] **SC02-BRIDGE:** For bridge contracts: Is cross-chain message verification based on
+      a well-audited Merkle library (e.g., OpenZeppelin MerpleProof)? Are roots validated
+      against signed validator attestations, not just computed values? Is there a fallback
+      mechanism (guardian watchtower) for suspicious withdrawals? *Verus Bridge: $11.6M —
+      forged Merkle proofs accepted as valid cross-chain withdrawal authorization.*
+- [ ] **SC02-LEGACY:** Are deprecated/legacy contracts still accessible on-chain? Even if
+      the frontend disables them, can they be called directly? *Transit Finance: $1.88M —
+      deprecated TRON contract from 2022 with known vulnerabilities still callable.*
+
 
 ## SC03 — Price Oracle Manipulation 👁🤖
 - [ ] Is any price derived from a **spot** AMM reserve / `getReserves` / `balanceOf`
@@ -154,6 +170,22 @@ Legend: 🤖 = an automated tool/rule can flag candidates · 👁 = needs human 
 ## Weak randomness 🤖
 - [ ] `block.timestamp`/`blockhash`/`prevrandao` used for anything valuable? (use VRF)
 
+## X04 — Cryptographic / TSS 👁 (threshold signatures, key management)
+- [ ] 👁 **X04-TSS:** For protocols using threshold signatures (GG20, FROST, DKLS): Is the
+      TSS library current with upstream? Are all cryptographic proofs (MOD, FAC, MtA)
+      verified during key generation? Check for CVE-2023-33241 / TSSHOCK in any GG20
+      implementation. *THORChain: $10.8M — tss-lib fork was 3 years behind upstream,
+      skipped MOD/FAC proof checks. Malicious node registered malformed Paillier modulus,
+      extracted key share residues from signing rounds, reconstructed vault private key.*
+- [ ] 👁 **X04-TSS-SYBIL:** For permissionless node/operator bonding in TSS-based systems:
+      Is there Sybil resistance beyond economic stake? Can an attacker bond the minimum,
+      churn into the active set, and become a co-signer with no reputation/history check?
+      *THORChain: attacker bonded 635K RUNE, churned in within days, no history check.*
+- [ ] 👁 **X04-TSS-AUDIT:** Has the TSS library been audited **after** the latest known
+      CVE disclosure for that cryptographic scheme? Pre-CVE audits are stale — the
+      vulnerability class they missed is the one that gets exploited. *THORChain:
+      Trail of Bits audit predated CVE-2023-33241 disclosure by months.*
+
 ---
 
 ---
@@ -180,6 +212,18 @@ losses.
 - [ ] Callback functions verify the **caller** address? (fake-pool callback drain) `SOL-Defi-AS-12`
 - [ ] Fee-on-transfer / rebasing / non-18-decimal tokens handled? `SOL-Defi-AS-9`,`-10`,`-8`
 - [ ] Rounding in the constant-product / invariant formula. `SOL-Defi-AS-5`
+- [ ] Does any pay/settle function forward arbitrary trailing calldata to a callback
+  (via `calldatacopy`) and verify only its own balance delta? A malicious callback
+  can use pre-existing third-party approvals to fund the repayment — the protocol
+  becomes a drain rail. `SC02-CB-1` *Ekubo: $1.4M via callback calldata injection
+  (2026-05-05). SwapNet: $17M calldata injection (2026-01-25).*
+- [ ] In flash-accounting / callback-based routers, does the repayment verification
+  check the *source* of funds (e.g., `msg.sender` balance change) or only the
+  *contract's* balance? If only the latter, any approved contract can be
+  weaponized as a drain rail. `SC02-CB-2`
+- [ ] Does the callback interface allow the caller to inject arbitrary recipient/
+  amount parameters via forwarded calldata that get passed to `transferFrom`?
+  If so, standing approvals to the callback contract create a drain vector. `SC02-CB-3`
 
 ### Lending / Borrowing
 - [ ] Does liquidation work during rapid downturns / when paused / when resumed? `SOL-Defi-Lending-1`,`-4`,`-5`
@@ -216,6 +260,12 @@ losses.
 ### Multi-chain / Cross-chain (Kelp-class territory)
 - [ ] Cross-chain message verifies **source chain + sender + nonce**; DVN/verifier set
       not a single point of failure? `SOL-McCc-8`, X01
+- [ ] **X01-DVN-CONFIG:** For DVN-based bridges (LayerZero, etc.): Does the DVN configuration
+      require ≥2 independent verifiers from different infrastructure providers? Is `requiredDVNs.length >= 2`?
+      Are deployment scripts enforcing minimum DVN count (not just docs)? Is `optionalDVNs` populated as
+      fallback? Do DVN admin addresses NOT overlap across registrations? *Kelp DAO: $292M — 1-of-1 DVN
+      config meant a single compromised verifier authorized a forged cross-chain message. 47% of LayerZero
+      OApps had the same vulnerable default.*
 - [ ] `block.number`/`block.timestamp` assumed consistent across chains? `SOL-McCc-1`
 - [ ] ERC20 decimals consistent across chains? `SOL-McCc-6`
 - [ ] `PUSH0`/opcode compatibility on every target chain (zkSync etc.)? `SOL-McCc-3`,`-12`
