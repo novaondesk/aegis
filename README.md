@@ -44,6 +44,8 @@ deep-dive case study + runnable PoC.
 | Loopscale spot-price oracle ($5.8M) | SC03/SC02 | Solana | 📄 studied |
 | Loopscale unvalidated CPI ($5.8M) | SC03/SC05 | Solana | 📄 studied |
 | Mango oracle manipulation ($114M) | SC03/SC02 | Solana | 📄 studied |
+| Beanstalk governance flash-loan ($181M) | SC02/SC04 | EVM | ✅ coded PoC |
+| Rhea Finance multi-hop slippage ($18.4M) | SC02/SC07 | NEAR (EVM model) | ✅ coded PoC |
 
 `coded` = runnable PoC in [`poc/`](poc/); `studied` = deep-dive case study, PoC not yet ported.
 
@@ -104,7 +106,7 @@ detector → log.
 ## Status — v1.0.0
 
 First stable release. See [`CHANGELOG.md`](CHANGELOG.md) and [`research-log/`](research-log/).
-- **Catalog:** 8 exploit detectors (2 with coded PoCs), machine-readable + agent-driven.
+- **Catalog:** 10 exploit detectors (4 with coded PoCs), machine-readable + agent-driven.
 - **Skill:** `aegis-audit` runs the catalog sweep end to end.
 - **Pattern library:** OWASP SC Top 10 (2026) taxonomy; 370-item Solodit EVM backstop;
   exploit-justified front-line checklist with archetype playbooks.
