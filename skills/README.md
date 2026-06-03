@@ -39,7 +39,11 @@ contract review / "evaluate this against known exploits" / bug hunt / PoC.
 ## Available skills
 | Skill | Does |
 |-------|------|
-| `aegis-audit` | RECON → **catalog sweep** (target vs. every studied exploit) → checklist review → PoC → report. EVM-mature; Solana/Move entries are `studied` (catalog + doc) until their PoCs land. |
+| `aegis-audit` | **Red team.** RECON & scope → **catalog sweep** (target vs. every studied exploit, using each entry's `root_cause` + `variant_queries`) → REVIEW engines (state-invariant + semantic-guard) for novel bugs → PoC → scored report. All 10 catalog entries are `coded`. |
+| `aegis-defender` | **Blue team / protect.** Turns audit findings into minimal fixes **proven by a `Safe<X>` PoC** that defeats the same exploit, plus a deploy/upgrade **release-gate** (build integrity, storage-layout/upgrade safety, ownership handoff, signer opsec, config drift). |
+
+The two compose: `aegis-audit` finds and proves the bug; `aegis-defender` proves the fix
+and gates the release. Each skill keeps detail in its own `references/` (loaded on demand).
 
 ## Adding a skill
 Create `skills/<name>/SKILL.md` with `name` + `description` frontmatter and the workflow.

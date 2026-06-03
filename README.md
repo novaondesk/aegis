@@ -51,16 +51,18 @@ deep-dive case study + runnable PoC.
 chain (Solana/Move/NEAR) and the PoC reproduces the same broken invariant in Solidity, so
 it runs in the Foundry harness; a native Anchor/Move port is the fidelity follow-up.
 
-## Use it as an agent skill
+## Use it as agent skills
 
-Aegis ships as a loadable [Agent Skill](skills/aegis-audit/SKILL.md) so any Claude/agent
-can run the sweep for you:
-```bash
-cp -r skills/aegis-audit ~/.claude/skills/    # or <project>/.claude/skills/
-```
-Then ask it to *"audit this contract"* or *"evaluate this target against known
-exploits."* It loads the catalog, runs the sweep, and drives recon → PoC → report. See
-[`skills/`](skills/).
+Aegis ships as two composable [Agent Skills](skills/):
+- **[`aegis-audit`](skills/aegis-audit/SKILL.md)** (red team) — recon & scope → catalog
+  sweep → state-invariant + semantic-guard engines → PoC → scored report.
+- **[`aegis-defender`](skills/aegis-defender/SKILL.md)** (blue team) — turns findings into
+  fixes **proven by a `Safe<X>` PoC**, plus a deploy/upgrade release-gate.
+
+Register the repo's `skills/` dir in place (so the `../../catalog` links resolve) — e.g.
+symlink it, or add it to Hermes `skills.external_dirs`; see [`skills/`](skills/). Then ask
+to *"audit this contract"* / *"evaluate this target against known exploits"* (audit) or
+*"remediate these findings"* / *"is this safe to deploy?"* (defender).
 
 ## Tooling
 
@@ -80,7 +82,7 @@ integration notes in [`docs/methodology/security-tooling-landscape.md`](docs/met
 | Path | What lives here |
 |---|---|
 | `catalog/` | **The exploit catalog** — `exploits.yaml` (sweep source) + schema |
-| `skills/` | Aegis as a loadable agent skill (`aegis-audit`) |
+| `skills/` | Aegis as loadable agent skills (`aegis-audit` red team, `aegis-defender` blue team) |
 | `docs/exploits/` | Deep-dive case studies — one file per incident/class |
 | `docs/vuln-classes/` | Taxonomy (OWASP SC Top 10 2026 + X-classes) |
 | `docs/methodology/` | Industry practice, tooling stack, sources |
@@ -109,7 +111,8 @@ detector → log.
 
 First stable release. See [`CHANGELOG.md`](CHANGELOG.md) and [`research-log/`](research-log/).
 - **Catalog:** 10 exploit detectors, all with runnable PoCs, machine-readable + agent-driven.
-- **Skill:** `aegis-audit` runs the catalog sweep end to end.
+- **Skills:** `aegis-audit` (red — catalog sweep + general engines + scored PoC report)
+  and `aegis-defender` (blue — fixes proven by `Safe<X>`, deploy/upgrade release-gate).
 - **Pattern library:** OWASP SC Top 10 (2026) taxonomy; 370-item Solodit EVM backstop;
   exploit-justified front-line checklist with archetype playbooks.
 - **Next:** port the EVM-modelled Solana/Move PoCs to native Anchor/Move harnesses for

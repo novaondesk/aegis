@@ -39,11 +39,14 @@ target source ──► for each catalog entry:
 | `archetypes` | target shapes it applies to — used to scope the sweep quickly |
 | `loss_usd` / `date` | headline loss & incident date (or `recurring` for a class) |
 | `summary` | one paragraph: what the attacker did and why it worked |
+| `root_cause` | one-line variant-analysis statement — "happens because *X* reaches *sensitive op* without *protection*." The sweep's true/false-positive judge. |
 | `applies_when` | **preconditions** — checkable statements about the target. The more that hold, the higher the hypothesis ranks. |
 | `probes` | concrete ways to confirm on the target (grep / semgrep / manual) |
+| `variant_queries` | grep/semgrep patterns (the abstraction ladder) to hunt this bug's *family* across a target; combine into one regex per sweep pass |
 | `invariant` | the property that should hold; the exploit breaks it |
 | `detection.static_flags` | does slither/semgrep reliably catch it? (usually `false`) |
 | `doc` / `poc` / `poc_cmd` | deep-dive doc, runnable PoC, and how to run it |
+| `fork_poc` | *(optional)* external mainnet-fork replay of the real incident (e.g. a DeFiHackLabs path) — realism backing for the minimal model |
 | `checklist` / `semgrep` | relevant `checklists/master-checklist.md` class ids and `tools/semgrep` rule ids |
 | `sources` | primary references |
 
@@ -62,9 +65,11 @@ runnable PoC breaks the stated `invariant`.
 ## Adding an entry (do this for every exploit studied)
 
 1. Write the deep-dive in `../docs/exploits/<id>.md` (use `_TEMPLATE.md`).
-2. Add a catalog entry here with **checkable** `applies_when` preconditions — the part
+2. Add a catalog entry here with **checkable** `applies_when` preconditions, a one-line
+   `root_cause` statement, and `variant_queries` (the grep family to hunt it) — the part
    that makes it reusable. Avoid restating the story; encode the *signals*.
-3. Link the `checklist` class and any `semgrep` rule; add the rule if it's new.
+3. Link the `checklist` class and any `semgrep` rule; add the rule if it's new. If a
+   mainnet-fork replay of the incident exists (e.g. DeFiHackLabs), link it as `fork_poc`.
 4. If you coded a PoC, set `status: coded` + `poc`/`poc_cmd`.
 5. Keep it parseable: `python3 -c "import yaml; yaml.safe_load(open('catalog/exploits.yaml'))"`.
 

@@ -1,133 +1,199 @@
 ---
 name: aegis-audit
-description: >
-  Audit a smart contract against Aegis's catalog of studied real-world exploits to
-  find vulnerabilities, then prove each one with a runnable PoC. Use when asked to
-  audit/review a Solidity (or Anchor/Move) contract or protocol, evaluate a target
-  against known exploits, hunt for vulnerabilities, triage a bounty target, or
-  reproduce a suspected bug. Loads catalog/exploits.yaml and sweeps the target
-  against every known exploit before going deep.
-version: 1.0.0
+description: >-
+  Use when auditing or reviewing a smart contract or live bounty target for
+  vulnerabilities, evaluating a target against known DeFi exploits, hunting for bugs,
+  triaging a bounty scope, or reproducing a suspected exploit — on EVM (Solidity),
+  Solana (Anchor), or Sui/Aptos (Move) targets. Red-team vulnerability discovery that
+  proves each finding with a runnable PoC. NOT for deploy/upgrade release-gating (use
+  aegis-defender) or non-security code review.
+version: 2.0.0
 author: novaondesk
 license: MIT
+allowed-tools: Read Glob Grep Bash Write Edit AskUserQuestion Task TaskCreate TaskList TaskUpdate TodoRead TodoWrite
 prerequisites:
   commands: [forge, slither, semgrep]
 metadata:
   hermes:
     category: security
     tags: [security-audit, smart-contracts, defi, exploit-analysis, solidity, foundry, vulnerability-detection, web3]
-    related_skills: []
+    related_skills: [aegis-defender]
 ---
-
-> **Reference files resolve relative to the repo root** (`../../catalog/…`,
-> `../../checklists/…`, `../../poc/`). Run this skill from a checkout of the Aegis
-> repo, or register it in place (Hermes: add `<repo>/skills` to `skills.external_dirs`)
-> — a bare copy of just this directory will not find the catalog. Tools: `forge`
-> drives EVM PoCs; `slither`/`semgrep` accelerate TRIAGE if installed (the sweep is
-> reasoning-first and still works without them, EVM PoCs aside).
 
 # Aegis — Exploit-Catalog Audit
 
-Packages Aegis into a loadable agent skill. The core idea: don't audit from memory —
-**sweep the target against every exploit Aegis has studied**, then prove the hits.
-The durable asset is [`catalog/exploits.yaml`](../../catalog/exploits.yaml); this skill
-is the procedure that runs it.
+Audit a target by **sweeping it against every exploit Aegis has studied**, then proving
+the hits with PoCs — not by auditing from memory. The durable asset is
+[`catalog/exploits.yaml`](../../catalog/exploits.yaml); this skill is the procedure that
+runs it. Pair it with [`aegis-defender`](../aegis-defender/SKILL.md) to ship the fix.
+
+> **Run from a checkout of the Aegis repo.** Reference files under `references/` resolve
+> next to this SKILL.md; repo assets resolve from the repo root (`../../catalog/…`,
+> `../../checklists/…`, `../../poc/`). A bare copy of just this folder won't find the
+> catalog. `forge` drives EVM PoCs; `slither`/`semgrep` accelerate probes if installed
+> (the sweep is reasoning-first and works without them).
+
+## Essential principles (non-negotiable)
+
+1. **Defensive / responsible-disclosure only.** In-scope bounty targets, public
+   post-mortems, or your own deployments. The goal is to get bugs *fixed*. Never probe
+   out-of-scope or live contracts you aren't authorized to test. *Why:* this is the line
+   between security research and an attack.
+2. **No finding without a runnable PoC.** A Foundry / `anchor test` / Move test that
+   breaks the entry's stated `invariant`. An unproven match is a **hypothesis**, not a
+   finding. *Why:* LLMs produce plausible-but-wrong vulns; the PoC is the truth oracle.
+3. **Sweep, don't reminisce.** Evaluate the target against the *catalog*, not your
+   training-data memory of "common bugs." *Why:* coverage you can prove ("checked all N")
+   beats a vibe, and the catalog encodes signals memory skips.
+4. **Cite primary sources** for any exploit/$ claim; verify before asserting.
 
 ## When to use
 - Auditing/reviewing a contract or live bounty target for vulnerabilities.
 - "Evaluate this target against all known exploits" / "what could go wrong here?"
-- Reproducing a suspected bug as a PoC.
+- Triaging a bounty scope, or reproducing a suspected bug as a PoC.
 
-## Hard rules (non-negotiable)
-1. **Defensive / responsible-disclosure only** — in-scope bounty targets, public
-   post-mortems, or own deployments. The goal is to find bugs so they get *fixed*.
-   Never probe out-of-scope or live contracts you aren't authorized to test.
-2. **No finding without a runnable PoC** — a Foundry (EVM) / `anchor test` / Move test
-   that breaks the entry's stated invariant. Unproven matches are *hypotheses*, not findings.
-3. **Cite primary sources** for any exploit/$ claim; verify before asserting.
+## When NOT to use
+- **Deploy/upgrade readiness, CI/CD, signer opsec** → use [`aegis-defender`](../aegis-defender/SKILL.md).
+- **Generic non-security code review** → use a code-review skill; this hunts exploits.
+- **Studying a single known incident** for its own sake → read `docs/exploits/<id>.md`
+  (or the DeFiHackLabs fork-replay linked as `fork_poc`); no sweep needed.
 
-## Workflow
+## Workflow (numbered phases — do them in order)
 
-### 1. RECON — understand the target
-Read all source. Map architecture, roles, trust boundaries, external calls, value
-flows. For unverified on-chain code, decompile with heimdall-rs. Pin down:
-- **chain** (evm / solana / sui-move / …) and **archetype(s)** — vault, AMM/CLMM,
-  lending, perp, stablecoin-mint, bridge, oracle-consumer, Anchor-program, etc.
+### Phase 1 — RECON & SCOPE
+**Entry:** you have the target source (or decompile unverified bytecode with heimdall-rs).
+**Actions:**
+1. Read all source. Map architecture, privileged roles, trust boundaries, external calls,
+   value entry/exit points. Enumerate entry points (public/external fns, Anchor
+   instructions, Move entry funs).
+2. Classify: **chain** (evm / solana / sui-move / …) and **archetype(s)** — vault, AMM/CLMM,
+   lending, perp, stablecoin-mint, bridge, oracle-consumer, dao-governance, anchor-program, …
+3. Emit a **scope block** (≤30 lines):
+   ```
+   Target: <name>  Chain: <…>  Archetype(s): <…>
+   Privileged roles: […]   Value in/out: […]   Key invariants (≤5): […]
+   External deps / oracles: […]
+   ```
+4. **Select what to run** (scope-first — don't run everything blindly): filter the catalog
+   to entries whose `chains` + `archetypes` could apply, and pick the REVIEW engines that
+   fit (see `references/general-engines.md`). This bounds the work.
+**Exit:** scope block written; candidate catalog entries + engines selected.
 
-### 2. SWEEP — the catalog pass (this is the heart of Aegis)
-Load [`catalog/exploits.yaml`](../../catalog/exploits.yaml). Filter to entries whose
-`chains` and `archetypes` could apply to the target, then for **every** such entry:
+### Phase 2 — SWEEP (the heart of Aegis)
+**Entry:** Phase 1 complete. Load [`catalog/exploits.yaml`](../../catalog/exploits.yaml).
+**Actions:** for **every** candidate entry, evaluate `applies_when` against the source and
+rank it. Make probes **scale**: combine each entry's `variant_queries` / `probes` into one
+combined regex per pass and Grep the whole codebase once — never N files × M patterns
+(see `references/sweep-rigor.md`). Use the entry's `root_cause` statement to judge true vs
+false matches.
 ```
-for entry in catalog (matching chain + archetype):
-    evaluate entry.applies_when against the target's source
-    run entry.probes (grep / semgrep / manual checks)
-    rank: HIGH (all preconditions hold) | MED (most hold) | LOW/NA
+for entry in candidates:
+    evaluate entry.applies_when against source
+    grep entry.variant_queries (combined) → review every hit against entry.root_cause
+    rank: HIGH (all preconditions hold) | MED (most hold) | LOW | N/A
 ```
-Produce a **coverage table** — one row per catalog entry — so it's explicit which
-known exploits were checked and what the verdict was. Nothing studied gets skipped.
+Optionally accelerate with `slither --config-file ../../tools/slither/slither.config.json`
+and `semgrep --config ../../tools/semgrep <target>`; map every hit back to a catalog id.
+Most entries are `detection.static_flags: false` — scanners won't catch them; the
+preconditions are how you find them.
+**Exit:** a **coverage table** with one row per candidate entry, each with a verdict.
+Nothing studied is silently skipped.
 
-> Run the automated probes to accelerate the sweep, not replace it:
-> `slither <target> --config-file tools/slither/slither.config.json`
-> `semgrep --config tools/semgrep <target>`
-> Map each hit back to the catalog entry / checklist id it supports. Most catalog
-> entries have `detection.static_flags: false` — scanners won't catch them; the
-> preconditions are how you find them.
+### Phase 3 — REVIEW (novel bugs the catalog doesn't list)
+**Entry:** Phase 2 complete.
+**Actions:** the catalog encodes *known* exploits; this phase finds *new* ones. Run the two
+general engines from `references/general-engines.md`:
+- **State-invariant inference** — infer sum / conservation / ratio / monotonic / sync
+  relations between state vars, then find functions that break them.
+- **Semantic-guard consistency** — a contract is its own spec: find functions missing a
+  check (modifier / require / pause) that siblings consistently apply.
+Then walk [`checklists/master-checklist.md`](../../checklists/master-checklist.md) for the
+archetype; fall back to [`solodit-aggregated-checklist.md`](../../checklists/solodit-aggregated-checklist.md)
+for breadth. Spend the most time on SC02 (logic), SC03 (oracle), SC07 (precision).
+**Exit:** general-engine findings + uncovered-surface notes appended to the coverage table.
 
-### 3. REVIEW — fill the gaps the catalog doesn't cover
-The catalog encodes *known* exploits. For novel logic, walk
-[`checklists/master-checklist.md`](../../checklists/master-checklist.md) (class checks +
-the matching archetype playbook); fall back to
-[`checklists/solodit-aggregated-checklist.md`](../../checklists/solodit-aggregated-checklist.md)
-(370 items) for breadth. Spend the most time on SC02 (logic), SC03 (oracle), SC07
-(precision) — tools can't read economic intent.
+### Phase 4 — HYPOTHESIZE
+**Entry:** ranked matches + engine findings exist.
+**Actions:** for each HIGH/MED row, write one concrete sentence:
+*"if <attacker does X> then <gains Y> because <invariant Z breaks>."* Use the entry's
+`invariant` as the property to violate.
+**Exit:** every HIGH/MED row has a falsifiable hypothesis.
 
-### 4. HYPOTHESIZE — make each match concrete
-For each HIGH/MED row: *"if <attacker does X> then <gains Y> because <invariant Z
-breaks>."* Use the entry's `invariant` field as the property to violate.
+### Phase 5 — PROVE (PoC or it didn't happen)
+**Entry:** hypotheses exist.
+**Actions:** write a PoC under `poc/`: `Vulnerable<X>.sol` + `Safe<X>.sol` +
+`test/<X>.t.sol` with `test_*_isExploited` (attacker profits / invariant breaks) and
+`test_*_resistsAttack` (the fix holds). Run `cd poc && forge test --match-contract <X> -vv`.
+For a `coded` catalog entry, its `poc_cmd` is the worked template. Arithmetic/precision
+(SC07): add a Halmos/Z3 symbolic check or fuzz with dust amounts.
+**Exit:** the vulnerable test passes (exploit reproduced) **and** the safe test passes
+(fix proven). A hypothesis without a passing PoC stays a hypothesis.
 
-### 5. PROVE — PoC or it didn't happen
-Write a PoC under `poc/`: `Vulnerable<X>.sol` + (optional) `Safe<X>.sol` +
-`test/<X>.t.sol` asserting the attacker profits / the invariant breaks.
-`cd poc && forge test --match-contract <X> -vv`. For coded catalog entries, the
-existing PoC (`entry.poc_cmd`) is the worked template. Arithmetic/precision (SC07):
-add a symbolic check (Halmos/Z3) or fuzz with dust amounts.
+### Phase 6 — SCORE & REPORT
+**Entry:** PoC-backed findings exist.
+**Actions:** score each finding's confidence (`references/confidence-scoring.md`) and write
+it in the structured format (`references/finding-format.md`): severity (Immunefi V2.2) +
+confidence %, location, root cause, exploit steps, impact, **fix (lead with it)**, PoC.
+Open with the coverage table so the reader sees what was checked.
+**Verification (do not skip):** every reported finding has a file:line location, a passing
+PoC command, and a concrete fix; no placeholder text remains; every catalog candidate has a
+verdict in the coverage table.
+**Exit:** report emitted; hand fixes to `aegis-defender` for release-gating.
 
-### 6. REPORT — severity + remediation
-Severity per Immunefi V2.2 (impact × privilege × likelihood). Include root cause, the
-vulnerable code, attack steps, the broken invariant, the PoC, and a fix. Lead with the
-fix — the point is to make the target safer.
+## Scope-first engine selection
 
-## Output: a sweep report
-```
-Target: <name> (<chain>, archetype: <…>)
-Catalog coverage: N/N entries evaluated
-┌─────────────────────────────┬────────┬─────────────────────────────────────┐
-│ exploit                     │ verdict│ note                                │
-├─────────────────────────────┼────────┼─────────────────────────────────────┤
-│ erc4626-inflation           │ HIGH   │ totalAssets() reads balanceOf(this) │
-│ read-only-reentrancy        │ N/A    │ no pool-view used as oracle         │
-│ …                           │ …      │ …                                   │
-└─────────────────────────────┴────────┴─────────────────────────────────────┘
-Findings (PoC-backed): …
-```
+Run only what fits the archetype (bounds token use; see the tiering note in
+`references/confidence-scoring.md`).
 
-## Reference material in this repo
-- [`catalog/exploits.yaml`](../../catalog/exploits.yaml) — the exploit catalog (sweep source). Schema: [`catalog/README.md`](../../catalog/README.md).
-- [`checklists/master-checklist.md`](../../checklists/master-checklist.md) — exploit-justified checks + archetype playbooks.
-- [`docs/vuln-classes/`](../../docs/vuln-classes/) — taxonomy (OWASP SC Top 10 2026 + X-classes).
-- [`docs/exploits/`](../../docs/exploits/) — the deep-dive case studies each catalog entry links to.
-- [`poc/`](../../poc/) — runnable PoCs; `poc/test/InflationAttack.t.sol` is the worked example.
-- [`tools/`](../../tools/) — slither config, semgrep rules, foundry invariant templates.
+| Archetype | Catalog classes to prioritize | REVIEW engines |
+|---|---|---|
+| Vault / ERC-4626 | SC07 precision, SC02 | state-invariant (ratio), semantic-guard |
+| AMM / CLMM / stableswap | SC07, SC03, SC08 reentrancy | state-invariant (ratio/conservation) |
+| Lending / perp / cross-margin | SC03 oracle, SC02 | state-invariant (sync), semantic-guard |
+| Stablecoin mint / bridge | SC05 validation, SC02 | semantic-guard, state-invariant (sum) |
+| DAO governance | SC02, SC04 flash-loan | semantic-guard (snapshot vs realtime) |
+| Anchor / Move program | SC05 account/CPI, SC07 | semantic-guard, entry-point review |
 
-## Closing the loop
-If the sweep teaches you a new pattern (or a target reveals a novel bug): write a
+**Tiered output depth:** PoC only for Critical/High; Medium → root cause + ≤3-step exploit;
+Low/Info → one line. If a dimension has no attack surface, write "N/A" and move on.
+
+## Rationalizations to Reject
+
+LLMs talk themselves out of real findings. Reject these:
+
+| Rationalization | Why it's wrong |
+|---|---|
+| "Looks clean, skip the deep pass" | Surface cleanliness ≠ security. Every entry point gets evaluated. |
+| "Well-known protocol / fork, it's safe" | Forks copy bugs; the original may be unaudited. Check *this* code+version. |
+| "No matches, so it's secure" | Zero findings often means weak analysis, not safe code. Did you actually run the sweep? |
+| "The match is probably a false positive" | Don't dismiss — check it against the entry's `root_cause`, then prove or disprove with a PoC. |
+| "Admin is trusted, ignore it" | Model admin compromise and excessive powers; rugpull-by-design is a finding. |
+| "Small rounding / dust, not worth it" | Precision leaks compound (see Balancer); dust is the *exploit*, not noise. |
+| "Can't write a PoC, but I'm sure" | Then it isn't a finding yet. No PoC, no claim. |
+
+## Reference index
+| File | Use |
+|---|---|
+| [references/sweep-rigor.md](references/sweep-rigor.md) | Root-cause statements + abstraction ladder + scalable probing (the SWEEP discipline) |
+| [references/general-engines.md](references/general-engines.md) | State-invariant inference + semantic-guard consistency (REVIEW phase) |
+| [references/confidence-scoring.md](references/confidence-scoring.md) | Confidence formula, FP rates, tiering, Immunefi mapping |
+| [references/finding-format.md](references/finding-format.md) | Coverage table + structured finding + report template |
+
+Repo assets: [`catalog/exploits.yaml`](../../catalog/exploits.yaml) (schema:
+[`catalog/README.md`](../../catalog/README.md)) · [`checklists/`](../../checklists/) ·
+[`docs/exploits/`](../../docs/exploits/) · [`poc/`](../../poc/) · [`tools/`](../../tools/).
+
+## Success criteria
+- [ ] Scope block emitted; catalog filtered by chain + archetype.
+- [ ] Coverage table: every candidate entry has a verdict (HIGH/MED/LOW/N/A).
+- [ ] REVIEW engines run; novel-bug surface noted.
+- [ ] Every reported finding has a **passing PoC** (vulnerable + safe) and a fix.
+- [ ] Each finding scored (severity + confidence %); report leads with the fix.
+
+## Closing the loop (every new pattern learned)
+If the sweep teaches a new pattern or a target reveals a novel bug: write a
 `docs/exploits/` case study, **add a `catalog/exploits.yaml` entry** with checkable
-`applies_when` preconditions, sharpen a `master-checklist.md` item, add a semgrep rule
-and/or invariant, and append `research-log/`. Commit as `novaondesk` (no AI trailer)
-and push. See [`AGENTS.md`](../../AGENTS.md).
-
-## Multi-chain note
-EVM is most mature (coded PoCs). Solana (Anchor) and Sui/Move entries are `studied`
-(catalog + doc, PoC not yet ported) — the sweep still applies; the PoC harness differs
-(`anchor test`, Move native tests). Per-ecosystem checklists:
-`checklists/solana-anchor-checklist.md` (and `move-*` as they land).
+`applies_when` + a `root_cause` statement + `variant_queries`, sharpen a
+`master-checklist.md` item, add a semgrep rule and/or invariant, append `research-log/`,
+and code the PoC (`status: coded`). Commit as `novaondesk` (no AI trailer) and push. See
+[`AGENTS.md`](../../AGENTS.md).
