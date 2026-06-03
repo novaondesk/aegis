@@ -1,0 +1,18 @@
+rules:
+  - id: multi-hop-min-sum
+    pattern: |
+      $ACC += $ACTION.min_amount_out
+    message: >
+      Summing min_amount_out across swap hops inflates the validated minimum.
+      Only the terminal hop's min_amount_out should be used for slippage protection.
+      Rhea Finance: $18.4M — get_token_out() summed all min_amount_out values
+      including intermediate hops, inflating the validated minimum 4.1M×.
+    severity: WARNING
+    languages: [rust, solidity]
+    metadata:
+      cwe:
+        - "CWE-682: Incorrect Calculation"
+      owasp-sc: [SC02, SC07]
+      references:
+        - https://rekt.news/rhea-finance-rekt/
+      exploit-id: rhea-finance-slippage
