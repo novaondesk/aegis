@@ -32,7 +32,8 @@ target easier to audit — ideally by adding/sharpening a catalog detector.
 | Path | Put here |
 |---|---|
 | `catalog/exploits.yaml` | One detector entry per studied exploit. The sweep source. See `catalog/README.md`. |
-| `skills/aegis-audit/` | The loadable agent skill that runs the catalog sweep. |
+| `skills/aegis-audit/` | Red-team agent skill: catalog sweep + general engines → scored PoC report. Detail in its `references/`. |
+| `skills/aegis-defender/` | Blue-team agent skill: fixes proven by a `Safe<X>` PoC + deploy/upgrade release-gate. |
 | `docs/exploits/` | One case study per incident/class. Use `_TEMPLATE.md`. |
 | `docs/vuln-classes/` | Taxonomy (OWASP SC Top 10 2026 + off-chain X-classes). |
 | `docs/methodology/` | Industry practice, tooling, sources. |
@@ -52,7 +53,8 @@ target easier to audit — ideally by adding/sharpening a catalog detector.
 2. RESEARCH   read post-mortems / code / audit reports. Capture sources.
 3. REPRODUCE  build a minimal runnable PoC in poc/ (vulnerable + safe + test).
 4. DISTILL    write docs/exploits/<name>.md (use _TEMPLATE.md).
-5. CATALOG    add a catalog/exploits.yaml entry with checkable applies_when preconditions.
+5. CATALOG    add a catalog/exploits.yaml entry: checkable applies_when + a root_cause
+              statement + variant_queries (the grep family). fork_poc if a replay exists.
 6. ENCODE     add/sharpen a checklist item + a semgrep rule and/or invariant.
 7. LOG        append research-log/<YYYY-MM-DD>-<topic>.md (done / takeaways / next).
 8. COMMIT     small, focused commit (see identity below). Push.
