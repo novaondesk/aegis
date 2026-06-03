@@ -24,7 +24,9 @@ composable agent skills: **`aegis-audit`** (red team) and **`aegis-defender`** (
                    Nothing studied is skipped.
 3. REVIEW          general engines (state-invariant inference + semantic-guard consistency)
                    + the exploit-derived checklists catch novel bugs the catalog doesn't list
-4. PROVE           Foundry/Anchor/Move PoC that breaks the entry's invariant (vulnerable + safe)
+4. PROVE           Foundry/Anchor/Move PoC that breaks the entry's invariant (vulnerable + safe).
+                   For a *deployed* target, prove on a fork of real state (see sim/) — exploit the
+                   live contract + its real deps; only the attacker is deployed.
 5. SCORE & REPORT  severity (Immunefi V2.2) + confidence score — lead with the fix
 6. PROTECT         `aegis-defender` turns each finding into a fix proven by a `Safe<X>` PoC,
                    and release-gates the deploy/upgrade
@@ -109,7 +111,8 @@ integration notes in [`docs/methodology/security-tooling-landscape.md`](docs/met
 | `docs/methodology/` | Industry practice, tooling stack, sources |
 | `checklists/` | Exploit-justified per-class review checklists |
 | `tools/` | Slither config, semgrep rules, Foundry invariant templates |
-| `poc/` | Runnable Foundry PoCs (vulnerable + safe + exploit test) |
+| `poc/` | Runnable Foundry PoCs — minimal *models* of catalog patterns (vulnerable + safe + test) |
+| `sim/` | **Fork-simulation** — exploit the *real deployed target* on a forked chain (the PROVE phase for live targets); 3 real incident replays |
 | `research-log/` | Dated log of what we looked at and found |
 
 ## Contributing (agents & humans)
@@ -128,17 +131,18 @@ detector → log.
 - Every catalog entry documents *why* the pattern matters with a real loss attached —
   no theory-only entries.
 
-## Status — v2.0.0
+## Status — v2.1.0
 
 See [`CHANGELOG.md`](CHANGELOG.md) and [`research-log/`](research-log/).
-- **Catalog:** 21 exploit detectors, all with runnable PoCs, machine-readable + agent-driven
-  (v2.0.0 adds 11 distinct DeFiHackLabs-mined classes: cToken empty-market inflation, router
-  approval drain, proxy storage collision, signature replay/malleability, missing access
-  control, insecure randomness, fee-on-transfer accounting, reward-debt desync, unverified
-  callback, no-code-token bridge deposit, and AMM first-deposit skim).
-- **Skills:** `aegis-audit` (red — catalog sweep + general engines + scored PoC report)
-  and `aegis-defender` (blue — fixes proven by `Safe<X>`, deploy/upgrade release-gate).
+- **Catalog:** 26 exploit detectors (24 with runnable model PoCs, 2 studied), machine-readable +
+  agent-driven. v2.0.0 added 11 DeFiHackLabs-mined classes; v2.1.0 added Nova's 5 May-2026 studies
+  (3 coded) and the fork-simulation capability.
+- **Fork-simulation (`sim/`):** prove findings against *real deployed targets* on a forked chain.
+  3 real incident replays pass against mainnet state — Socket Gateway (approval drain, ~656k USDC),
+  Audius (proxy storage collision, ~18.56M AUDIO), DAO Maker (unprotected init, 5.76M DERC).
+- **Skills:** `aegis-audit` (red — catalog sweep + general engines + scored PoC report, now with a
+  Fork-PROVE mode) and `aegis-defender` (blue — fixes proven by `Safe<X>`, deploy/upgrade release-gate).
 - **Pattern library:** OWASP SC Top 10 (2026) taxonomy; 370-item Solodit EVM backstop;
   exploit-justified front-line checklist with archetype playbooks.
-- **Next:** port the EVM-modelled Solana/Move PoCs to native Anchor/Move harnesses for
-  full fidelity; grow the catalog per the research day-plans.
+- **Next:** point fork-sim at a live in-scope target (RECON → sweep → fork-PROVE); land the marquee
+  Beanstalk multi-protocol replay; native Solana/Move harnesses for non-EVM targets.
