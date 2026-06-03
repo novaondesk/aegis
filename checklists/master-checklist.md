@@ -23,6 +23,7 @@ Legend: 🤖 = an automated tool/rule can flag candidates · 👁 = needs human 
       paused, post-migration) to extract value?
 - [ ] Governance: can a proposal be created + executed within one tx / one block?
       *Beanstalk: flash-loan → supermajority → drain.*
+
 - [ ] 👁 **SC02-GOV-1:** Is governance voting power computed from **snapshots at proposal
       creation** or from **real-time balances**? If real-time, flash-loan-acquired tokens
       can swing votes atomically. Check if `vote()` or `emergencyCommit()` reads
@@ -47,6 +48,21 @@ Legend: 🤖 = an automated tool/rule can flag candidates · 👁 = needs human 
       *Rhea Finance: $18.4M — `get_token_out()` summed all `min_amount_out` values
       including intermediate hops, inflating the validated minimum 4.1M×. Post-swap
       `on_open_trade_return()` credited whatever arrived without re-checking.*
+
+- [ ] 🤖 **SC02-AC:** Is every function that modifies access-control state (whitelists,
+      role mappings, authorized-signer lists) restricted to admin/trusted callers?
+      Check for `public` visibility on setter functions for `mapping(address => bool)`
+      patterns. *TrustedVolumes: $6.7M — `setAuthorizedSigner` was public with no modifier,
+      attacker added self to whitelist, forged trade orders.*
+- [ ] **SC02-BRIDGE:** For bridge contracts: Is cross-chain message verification based on
+      a well-audited Merkle library (e.g., OpenZeppelin MerpleProof)? Are roots validated
+      against signed validator attestations, not just computed values? Is there a fallback
+      mechanism (guardian watchtower) for suspicious withdrawals? *Verus Bridge: $11.6M —
+      forged Merkle proofs accepted as valid cross-chain withdrawal authorization.*
+- [ ] **SC02-LEGACY:** Are deprecated/legacy contracts still accessible on-chain? Even if
+      the frontend disables them, can they be called directly? *Transit Finance: $1.88M —
+      deprecated TRON contract from 2022 with known vulnerabilities still callable.*
+
 
 ## SC03 — Price Oracle Manipulation 👁🤖
 - [ ] Is any price derived from a **spot** AMM reserve / `getReserves` / `balanceOf`
