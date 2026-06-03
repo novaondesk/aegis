@@ -1,0 +1,20 @@
+# Aegis fork-simulation harness.
+#
+# Unlike poc/ (minimal, chain-agnostic *models* of catalog patterns), sim/ forks a real
+# chain at a pinned block and exploits the REAL target + its live dependencies. You only
+# deploy your attacker contract; the target, tokens, oracles, pools already exist on the fork.
+#
+# Requires ETH_RPC_URL in the environment (an archive endpoint to pin historical blocks).
+# `cp .env.example .env` and fill it, then:  set -a; source .env; set +a; forge test
+[profile.default]
+src = "src"
+test = "test"
+libs = ["../poc/lib"]            # reuse the forge-std already vendored for poc/
+evm_version = "cancun"
+optimizer = true
+optimizer_runs = 200
+fs_permissions = []
+ffi = false
+
+[rpc_endpoints]
+mainnet = "${ETH_RPC_URL}"        # Ethereum (chainId 1)
