@@ -1,49 +1,51 @@
 ---
-title: Aegis
+title: Home
+nav_order: 1
 ---
 
-**Exploit-catalog-driven smart contract security auditing.** Aegis evaluates a target against a
-curated catalog of *studied, real-world DeFi exploits* — find the vulnerability **and prove the fix**
-before an attacker does. The durable asset is the catalog of structured detectors, not any one
-scanner; auditing means sweeping a target against every known attack and proving each hit with a
-runnable PoC.
+# Aegis
+{: .fs-9 }
 
-- **Repo:** [github.com/novaondesk/aegis](https://github.com/novaondesk/aegis)
-- **The catalog:** [`catalog/exploits.yaml`](https://github.com/novaondesk/aegis/blob/main/catalog/exploits.yaml) — 27 detectors (25 with runnable PoCs)
-- **Skills:** `aegis-audit` (red team) · `aegis-defender` (blue team)
+Exploit-catalog-driven smart contract security auditing — **find the bug, prove the fix.**
+{: .fs-6 .fw-300 }
 
-## Proof it works
+[Get started](getting-started){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 }
+[View on GitHub ↗](https://github.com/novaondesk/aegis){: .btn .fs-5 .mb-4 .mb-md-0 }
 
-**[→ Aegis vs. the Ethernaut wargame](https://github.com/novaondesk/aegis/blob/main/docs/ethernaut-wargame.md)** — Aegis solves OpenZeppelin's
-Ethernaut CTF **5/5** using only its catalog sweep. Each level's bug is identified by an
-`applies_when` match against a detector mined from a real hack, then proven by exploiting the real
-level contract. Read it to see exactly which catalog entries were used.
+---
 
-**Real-incident fork replays** ([`sim/`](https://github.com/novaondesk/aegis/tree/main/sim)) — the
-same detectors, proven against live mainnet state at the pre-hack block:
+Aegis evaluates a target contract or protocol against a curated catalog of **studied, real-world DeFi
+exploits** — so you find vulnerabilities *and* prove the fix before an attacker does. Every studied
+exploit becomes a structured **detector**; auditing a target means sweeping it against the whole
+catalog, proving each hit with a runnable PoC, then shipping a fix proven by a `Safe<X>` PoC.
 
-| Incident | Detector | Result on a mainnet fork |
+> The durable asset is the **catalog**, not any one scanner. Tools narrow the haystack; the catalog
+> tells you exactly which known attacks to check, and a PoC tells you whether the target is actually
+> vulnerable.
+
+## What's inside
+
+| | |
+|---|---|
+| **[The catalog](the-catalog)** | 27 detectors (25 with runnable PoCs) mined from real incidents — $292M Kelp, $181M Beanstalk, $128M Balancer, … |
+| **[PoCs & detectors](pocs)** | A `Vulnerable<X>` + `Safe<X>` + exploit test per detector — the proof, not a vibe |
+| **[Fork-simulation](fork-simulation)** | Exploit the *real deployed target* on a mainnet fork — 4 real incident replays |
+| **[The Ethernaut wargame](wargame)** | Aegis solves OpenZeppelin's CTF **5/5** purely by the catalog sweep |
+| **[How it works](how-it-works)** | The audit loop + the two agent skills (red `aegis-audit`, blue `aegis-defender`) |
+
+## Proof it generalizes
+
+The same detectors that catch real mainnet hacks also solve an independent third-party CTF:
+
+| Ethernaut level | Detector | … and the matching mainnet replay |
 |---|---|---|
-| Socket Gateway (2024) | `approval-drain-arbitrary-call` | drains a real victim's ~656k USDC |
-| Audius (2022) | `proxy-storage-collision` | seizes governance, drains ~18.56M AUDIO |
-| DAO Maker (2021) | `unprotected-privileged-fn` | unprotected init drains 5.76M DERC |
-| Beanstalk (2022) | `beanstalk-governance-flashloan` | ~$1B flash loan → ~$42M profit |
-
-## How it works
-
-1. **RECON & SCOPE** — pull source (or decompile), pin chain + archetype.
-2. **SWEEP** — evaluate the target against every catalog detector's `applies_when` → ranked hypotheses.
-3. **REVIEW** — general engines + exploit-derived checklists for novel bugs.
-4. **PROVE** — a Foundry PoC that breaks the entry's invariant (model in [`poc/`](https://github.com/novaondesk/aegis/tree/main/poc), or on a real fork in [`sim/`](https://github.com/novaondesk/aegis/tree/main/sim)).
-5. **SCORE & REPORT**, then **PROTECT** with a fix proven by a `Safe<X>` PoC.
-
-## Catalog classes covered
-
-OWASP SC Top 10 (2026): access control (SC01), logic (SC02), oracle/price manipulation (SC03),
-reentrancy (SC08), randomness (SC09), arithmetic/precision (SC07), unsafe external calls (SC05), and
-cross-chain/bridge classes — each entry justified by a real incident with a loss attached.
+| Delegation | `proxy-storage-collision` | Audius governance takeover ($1.08M) |
+| Dex | `loopscale-oracle-spot-price` | Mango oracle manipulation ($114M) |
+| Motorbike | `unprotected-privileged-fn` | DAO Maker unprotected init ($5.76M) |
+| Reentrance | `cei-reentrancy` | The DAO class |
+| CoinFlip | `insecure-randomness` | recurring NFT/lottery RNG |
 
 ---
-<sub>Defensive / responsible-disclosure use only. See the
-[repository](https://github.com/novaondesk/aegis) for the full catalog, case studies, checklists, and
-tooling.</sub>
+{: .text-grey-dk-000 }
+Defensive / responsible-disclosure use only. We evaluate in-scope bounty targets, public post-mortems,
+or our own deployments — to get bugs fixed.
