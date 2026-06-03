@@ -260,6 +260,12 @@ losses.
 ### Multi-chain / Cross-chain (Kelp-class territory)
 - [ ] Cross-chain message verifies **source chain + sender + nonce**; DVN/verifier set
       not a single point of failure? `SOL-McCc-8`, X01
+- [ ] **X01-DVN-CONFIG:** For DVN-based bridges (LayerZero, etc.): Does the DVN configuration
+      require ≥2 independent verifiers from different infrastructure providers? Is `requiredDVNs.length >= 2`?
+      Are deployment scripts enforcing minimum DVN count (not just docs)? Is `optionalDVNs` populated as
+      fallback? Do DVN admin addresses NOT overlap across registrations? *Kelp DAO: $292M — 1-of-1 DVN
+      config meant a single compromised verifier authorized a forged cross-chain message. 47% of LayerZero
+      OApps had the same vulnerable default.*
 - [ ] `block.number`/`block.timestamp` assumed consistent across chains? `SOL-McCc-1`
 - [ ] ERC20 decimals consistent across chains? `SOL-McCc-6`
 - [ ] `PUSH0`/opcode compatibility on every target chain (zkSync etc.)? `SOL-McCc-3`,`-12`
