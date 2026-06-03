@@ -50,6 +50,16 @@ Legend: 🤖 = an automated tool/rule can flag candidates · 👁 = needs human 
   - **Exploit:** Replay of legitimate cross-domain messages
   - **Mitigation:** Track processed message nonces, reject duplicates
 
+### Cross-Domain Merkle Proof Verification
+- [ ] For cross-chain bridges using Merkle proofs: Is the verification based on a
+  well-audited library (OpenZeppelin MerkleProof)? Are roots sourced from authenticated
+  validator attestations? Can proofs be forged?
+  - **Code smell:** Custom Merkle verification without library; root stored without signature check
+  - **Exploit:** Verus Bridge ($11.6M, May 2026) — forged Merkle proofs accepted as valid
+    cross-chain withdrawal authorization. Similar to Wormhole/Nomad pattern.
+  - **Mitigation:** Use OpenZeppelin MerkleProof; validate roots against signed attestations;
+    implement guardian watchtower for suspicious withdrawals
+
 ---
 
 ## Block & Time Semantics 👁
