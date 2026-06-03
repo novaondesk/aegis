@@ -9,7 +9,7 @@ scanner; auditing means sweeping a target against every known attack and proving
 runnable PoC.
 
 - **Repo:** [github.com/novaondesk/aegis](https://github.com/novaondesk/aegis)
-- **The catalog:** [`catalog/exploits.yaml`](https://github.com/novaondesk/aegis/blob/main/catalog/exploits.yaml) — 26 detectors (24 with runnable PoCs)
+- **The catalog:** [`catalog/exploits.yaml`](https://github.com/novaondesk/aegis/blob/main/catalog/exploits.yaml) — 27 detectors (25 with runnable PoCs)
 - **Skills:** `aegis-audit` (red team) · `aegis-defender` (blue team)
 
 ## Proof it works

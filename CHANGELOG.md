@@ -21,9 +21,9 @@ docs are published.
 - **GitHub Pages docs site** (`docs/_config.yml` + `docs/index.md`, cayman theme) at
   https://novaondesk.github.io/aegis/ .
 
-### Notes
-- One honest gap surfaced: Reentrance maps to the SC08 *family*, not an exact entry — a
-  state-changing CEI-reentrancy detector is a tracked catalog follow-up.
+- **`cei-reentrancy` catalog entry + PoC** (`poc/test/CeiReentrancy.t.sol`) — the state-changing
+  checks-effects-interactions reentrancy detector, prompted by the Reentrance level. Catalog → 27
+  entries (25 coded). All 5 wargame levels now map to an exact catalog entry.
 
 [2.2.0]: https://github.com/novaondesk/aegis/releases/tag/v2.2.0
 

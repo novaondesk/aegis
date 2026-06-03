@@ -3,11 +3,10 @@ pragma solidity ^0.8.0;
 
 import {Test} from "forge-std/Test.sol";
 
-/// Ethernaut #10 "Reentrance" → Aegis catalog `read-only-reentrancy` (SC08 reentrancy family).
-/// `withdraw` sends ETH via a low-level call BEFORE decrementing the caller's balance (CEI
-/// violation), so a malicious `receive()` re-enters `withdraw` and drains the contract. (The
-/// catalog's coded entry is the read-only sibling; this is the classic state-changing CEI variant
-/// under the same SC08 class / checklist.) Win condition (ReentranceFactory): contract balance == 0.
+/// Ethernaut #10 "Reentrance" → Aegis catalog `cei-reentrancy` (SC08).
+/// `withdraw` sends ETH via a low-level call BEFORE decrementing the caller's balance (checks-
+/// effects-interactions violation), so a malicious `receive()` re-enters `withdraw` and drains the
+/// contract. Win condition (ReentranceFactory): contract balance == 0.
 /// (Reentrance is ^0.6.12, deployed via `deployCode`.)
 interface IReentrance {
     function donate(address to) external payable;

@@ -28,7 +28,7 @@ only adds a wallet + testnet transaction on top of the same contracts.
 |---|---|---|---|
 | #3 CoinFlip | SC09 | [`insecure-randomness`](exploits/insecure-randomness.md) | [`test/CoinFlip.t.sol`](../ethernaut/test/CoinFlip.t.sol) |
 | #6 Delegation | SC01 | [`proxy-storage-collision`](exploits/proxy-storage-collision-2022-07.md) | [`test/Delegation.t.sol`](../ethernaut/test/Delegation.t.sol) |
-| #10 Reentrance | SC08 | [`read-only-reentrancy`](exploits/read-only-reentrancy.md) (family) | [`test/Reentrance.t.sol`](../ethernaut/test/Reentrance.t.sol) |
+| #10 Reentrance | SC08 | [`cei-reentrancy`](exploits/cei-reentrancy.md) | [`test/Reentrance.t.sol`](../ethernaut/test/Reentrance.t.sol) |
 | #22 Dex | SC03 | [`loopscale-oracle-spot-price`](exploits/loopscale-oracle-2025-04.md) (price-manip family) | [`test/Dex.t.sol`](../ethernaut/test/Dex.t.sol) |
 | #25 Motorbike | SC01 | [`unprotected-privileged-fn`](exploits/unprotected-privileged-fn.md) | [`test/Motorbike.t.sol`](../ethernaut/test/Motorbike.t.sol) |
 
@@ -63,19 +63,20 @@ without unstructured-slot separation, so a logic function overwrites the privile
 overwritten with the caller. **Win:** `owner == attacker`. (This is exactly the Audius-class bug whose
 real-world replay is in [`sim/`](../sim/test/AudiusGovTakeover_2022_07.t.sol).)
 
-## #10 Reentrance → `read-only-reentrancy` family (SC08)
+## #10 Reentrance → `cei-reentrancy` (SC08)
 
 **Sweep.** `withdraw()` sends ETH via `msg.sender.call{value:_amount}("")` **before** decrementing
-`balances[msg.sender]` — a classic checks-effects-interactions violation. This is the SC08 reentrancy
-class; the catalog's coded entry is the *read-only* sibling (a view read mid-callback), and the same
-SC08 checklist/`variant_queries` (`external call before state update`) flag this state-changing variant.
+`balances[msg.sender]`. Catalog `cei-reentrancy.applies_when` matched:
+- *"a function makes an external call … and updates balances/state AFTER it"* — the send precedes the decrement.
+- *"no reentrancy lock on the path"* — none.
+- *"the external call's recipient is attacker-controllable (msg.sender)"* — yes.
 
-**Root cause (shared class).** *A balance/effect is finalized after an external call, so a re-entrant
-call observes stale state.*
+**Root cause (catalog).** *A state-changing function performs an external call before the balance
+update, so an attacker-controlled callback re-enters with stale state.*
 
 **Prove.** A malicious `receive()` re-enters `withdraw()` until the contract is empty. **Win:**
-contract balance `== 0`. *(Honest note: this is the only level mapped to a catalog detector's family
-rather than an exact entry — a dedicated state-changing-reentrancy entry is a worthwhile catalog add.)*
+contract balance `== 0`. *(This level prompted adding the exact `cei-reentrancy` catalog entry — the
+state-changing sibling of `read-only-reentrancy` — with its own [PoC](../poc/test/CeiReentrancy.t.sol).)*
 
 ## #22 Dex → `loopscale-oracle-spot-price` / price-manipulation family (SC03)
 
@@ -116,7 +117,8 @@ that `selfdestruct`s via delegatecall. **Win:** the Engine has no code.
 - **The same detectors span CTF and mainnet:** Delegation ↔ the Audius $1.08M replay
   (`proxy-storage-collision`); Dex ↔ the Mango $114M / Loopscale entries (spot-price manipulation);
   Motorbike ↔ the DAO Maker $5.76M replay (`unprotected-privileged-fn`).
-- **One honest gap found:** Reentrance maps to the SC08 *family*, not an exact entry — a
-  state-changing CEI-reentrancy detector is a good catalog addition (tracked as follow-up).
+- **The wargame grew the catalog:** Reentrance initially mapped only to the SC08 *family*, so a
+  dedicated [`cei-reentrancy`](exploits/cei-reentrancy.md) detector (+ PoC) was added — now all 5 map
+  to an exact entry. The benchmark feeding the catalog is the loop working as intended.
 
 Reproduce: `cd ethernaut && forge test -vv`.

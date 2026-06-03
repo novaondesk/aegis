@@ -19,7 +19,7 @@ forge test -vv     # forge-std reused from ../poc/lib; level sources vendored un
 |---|---|---|---|
 | #3 CoinFlip | SC09 | `insecure-randomness` | `test/CoinFlip.t.sol` |
 | #6 Delegation | SC01 | `proxy-storage-collision` | `test/Delegation.t.sol` |
-| #10 Reentrance | SC08 | `read-only-reentrancy` (family) | `test/Reentrance.t.sol` |
+| #10 Reentrance | SC08 | `cei-reentrancy` | `test/Reentrance.t.sol` |
 | #22 Dex | SC03 | `loopscale-oracle-spot-price` (price-manip family) | `test/Dex.t.sol` |
 | #25 Motorbike | SC01 | `unprotected-privileged-fn` | `test/Motorbike.t.sol` |
 
