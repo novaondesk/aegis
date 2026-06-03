@@ -56,6 +56,17 @@ statement, the `variant_queries` grep-family that hunts the bug across a target,
 | Mango oracle manipulation ($114M) | SC03/SC02 | Solana (EVM model) | ✅ coded PoC |
 | Beanstalk governance flash-loan ($181M) | SC02/SC04 | EVM | ✅ coded PoC |
 | Rhea Finance multi-hop slippage ($18.4M) | SC02/SC07 | NEAR (EVM model) | ✅ coded PoC |
+| cToken empty-market exchange-rate inflation (~$7M+) | SC07/SC02 | EVM | ✅ coded PoC |
+| Router arbitrary-call approval drain (Socket/Seneca) | SC05/SC01 | EVM | ✅ coded PoC |
+| Upgradeable-proxy storage-slot collision ($6M) | SC01 | EVM | ✅ coded PoC |
+| Signature replay + ecrecover malleability | SC01 | EVM | ✅ coded PoC |
+| Missing access control on a privileged fn (PAID) | SC01 | EVM | ✅ coded PoC |
+| Predictable on-chain randomness | SC09 | EVM | ✅ coded PoC |
+| Fee-on-transfer / weird-ERC20 accounting | SC02 | EVM | ✅ coded PoC |
+| MasterChef reward-debt desync (double-claim) | SC02 | EVM | ✅ coded PoC |
+| Unverified flash-loan / external callback | SC05/SC01 | EVM | ✅ coded PoC |
+| Bridge credits a no-code-token deposit (Qubit $80M) | SC02 | EVM | ✅ coded PoC |
+| AMM-pair first-deposit / share-skim | SC07 | EVM | ✅ coded PoC |
 
 `coded` = runnable PoC in [`poc/`](poc/). *(EVM model)* = the incident was on a non-EVM
 chain (Solana/Move/NEAR) and the PoC reproduces the same broken invariant in Solidity, so
@@ -117,10 +128,14 @@ detector → log.
 - Every catalog entry documents *why* the pattern matters with a real loss attached —
   no theory-only entries.
 
-## Status — v1.0.0
+## Status — v2.0.0
 
-First stable release. See [`CHANGELOG.md`](CHANGELOG.md) and [`research-log/`](research-log/).
-- **Catalog:** 10 exploit detectors, all with runnable PoCs, machine-readable + agent-driven.
+See [`CHANGELOG.md`](CHANGELOG.md) and [`research-log/`](research-log/).
+- **Catalog:** 21 exploit detectors, all with runnable PoCs, machine-readable + agent-driven
+  (v2.0.0 adds 11 distinct DeFiHackLabs-mined classes: cToken empty-market inflation, router
+  approval drain, proxy storage collision, signature replay/malleability, missing access
+  control, insecure randomness, fee-on-transfer accounting, reward-debt desync, unverified
+  callback, no-code-token bridge deposit, and AMM first-deposit skim).
 - **Skills:** `aegis-audit` (red — catalog sweep + general engines + scored PoC report)
   and `aegis-defender` (blue — fixes proven by `Safe<X>`, deploy/upgrade release-gate).
 - **Pattern library:** OWASP SC Top 10 (2026) taxonomy; 370-item Solodit EVM backstop;
