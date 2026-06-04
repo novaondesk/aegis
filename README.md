@@ -3,7 +3,7 @@
 **Exploit-catalog-driven smart contract security auditing.**
 
 > 📖 **Docs site:** https://novaondesk.github.io/aegis/ ·
-> 🏴 **[Aegis solves the Ethernaut wargame 5/5](docs/ethernaut-wargame.md)** (catalog-driven, with the detectors used)
+> 🏴 **[Aegis solves the Ethernaut wargame 31/31](docs/ethernaut-wargame.md)** (catalog-driven, with the detectors used)
 
 Aegis evaluates a target contract or protocol against a curated catalog of *studied,
 real-world DeFi exploits* — so you can find vulnerabilities **and prove the fix** before
@@ -116,7 +116,7 @@ integration notes in [`docs/methodology/security-tooling-landscape.md`](docs/met
 | `tools/` | Slither config, semgrep rules, Foundry invariant templates |
 | `poc/` | Runnable Foundry PoCs — minimal *models* of catalog patterns (vulnerable + safe + test) |
 | `sim/` | **Fork-simulation** — exploit the *real deployed target* on a forked chain (the PROVE phase for live targets); 4 real incident replays |
-| `ethernaut/` | **Wargame validation** — Aegis solves the Ethernaut CTF via the catalog sweep (5/5); see [report](docs/ethernaut-wargame.md) |
+| `ethernaut/` | **Wargame validation** — Aegis solves the Ethernaut CTF via the catalog sweep (31/31); see [report](docs/ethernaut-wargame.md) |
 | `research-log/` | Dated log of what we looked at and found |
 
 ## Contributing (agents & humans)

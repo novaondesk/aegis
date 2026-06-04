@@ -3,6 +3,28 @@
 All notable changes to Aegis are documented here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/); versions follow [SemVer](https://semver.org/).
 
+## [2.3.0] — 2026-06-03
+
+Full Ethernaut wargame coverage.
+
+### Added
+- **All 31 Ethernaut levels solved** in `ethernaut/` (was 5) — each exploited locally in Foundry
+  against the real level contract, asserting the level's own win condition. Older-pragma levels
+  (^0.5/^0.6/<0.7) via `deployCode`; minimal OZ shims under `ethernaut/src/vendor/` + `src/helpers/`.
+- **10 levels caught by an exact catalog detector** (the validation): `proxy-storage-collision`
+  (Delegation, Preservation, PuzzleWallet), `unprotected-privileged-fn` (Fallout, Motorbike,
+  Fallback), `loopscale-oracle-spot-price` (Dex, DexTwo), `insecure-randomness` (CoinFlip),
+  `cei-reentrancy` (Reentrance).
+- The other 21 are solved with general techniques that **surface catalog gaps** (DoS, forced-ether,
+  info-exposure, integer/storage underflow, tx.origin, calldata, untrusted-interface) — documented
+  as a detector to-do list in the report.
+
+### Changed
+- `docs/ethernaut-wargame.md` rewritten with the full 31-level coverage table + gaps section;
+  README / docs site / `ethernaut/README.md` updated 5/5 → 31/31.
+
+[2.3.0]: https://github.com/novaondesk/aegis/releases/tag/v2.3.0
+
 ## [2.2.0] — 2026-06-03
 
 Independent benchmark + documentation site. Aegis is validated against a third-party CTF, and the
