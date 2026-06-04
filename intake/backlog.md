@@ -51,17 +51,17 @@ just another incident. Verify date/loss against the primary post-mortem before d
 
 | id | date | protocol (representative) | class — *new detector it adds* | loss | priority | status |
 |----|------|---------------------------|--------------------------------|------|----------|--------|
-| ctoken-empty-market-exchange-rate | 2023-04 | Hundred Finance / Sonne / Onyx | SC07 — *cToken/lending exchange-rate inflation via empty-market donation (distinct from erc4626)* | ~$7M+ | P1 | todo |
-| approval-drain-arbitrary-call | 2024-02 | Seneca / Socket / Sushi RouteProcessor2 | SC05/SC01 — *router executes an arbitrary call carrying users' token approvals → mass approval drain* (the 18-incident "arbitrary external call" class) | ~$6–33M ea | P1 | todo |
-| proxy-storage-collision | 2022-07 | Audius | SC-proxy — *upgradeable proxy storage-slot collision lets an init/governance var overwrite another* | ~$6M | P1 | todo |
-| signature-replay-malleability | recurring | permit / bridges / TCH | SC01 — *missing nonce/domain or ecrecover malleability → replayed/forged signatures* | varies | P1 | todo |
-| unprotected-privileged-fn | recurring | PAID Network / many | SC01 — *missing access control on a privileged init/mint/setter* (largest DHL class by count) | up to ~$180M | P1 | todo |
-| insecure-randomness | recurring | NFT mints / lotteries | SC09 — *predictable on-chain RNG (block vars / blockhash) gamed* | varies | P2 | todo |
-| weird-erc20-accounting | recurring | fee-on-transfer / rebasing tokens | SC-integration — *protocol assumes received == sent; fee-on-transfer/rebasing breaks accounting* | varies | P2 | todo |
-| incorrect-reward-accounting | recurring | MasterChef / staking forks | SC02 — *reward/debt math desync (double-claim, inflated pending)* | varies | P2 | todo |
-| unverified-flashloan-callback | recurring | lending forks | SC05 — *flash-loan/callback hook callable by a spoofed provider without verifying the caller* | varies | P2 | todo |
-| qubit-bridge-deposit-logic | 2022-01 | Qubit | SC02 — *bridge credits deposits for a zero/!-validated token address* | ~$80M | P2 | todo |
-| first-deposit-amm-skim | recurring | AMM pairs | SC07 — *empty-pool first-deposit / skim share manipulation (AMM-pair variant of inflation)* | varies | P3 | todo |
+| ctoken-empty-market-exchange-rate | 2023-04 | Hundred Finance / Sonne / Onyx | SC07 — *cToken/lending exchange-rate inflation via empty-market donation (distinct from erc4626)* | ~$7M+ | P1 | promoted |
+| approval-drain-arbitrary-call | 2024-02 | Seneca / Socket / Sushi RouteProcessor2 | SC05/SC01 — *router executes an arbitrary call carrying users' token approvals → mass approval drain* (the 18-incident "arbitrary external call" class) | ~$6–33M ea | P1 | promoted |
+| proxy-storage-collision | 2022-07 | Audius | SC-proxy — *upgradeable proxy storage-slot collision lets an init/governance var overwrite another* | ~$6M | P1 | promoted |
+| signature-replay-malleability | recurring | permit / bridges / TCH | SC01 — *missing nonce/domain or ecrecover malleability → replayed/forged signatures* | varies | P1 | promoted |
+| unprotected-privileged-fn | recurring | PAID Network / many | SC01 — *missing access control on a privileged init/mint/setter* (largest DHL class by count) | up to ~$180M | P1 | promoted |
+| insecure-randomness | recurring | NFT mints / lotteries | SC09 — *predictable on-chain RNG (block vars / blockhash) gamed* | varies | P2 | promoted |
+| weird-erc20-accounting | recurring | fee-on-transfer / rebasing tokens | SC-integration — *protocol assumes received == sent; fee-on-transfer/rebasing breaks accounting* | varies | P2 | promoted |
+| incorrect-reward-accounting | recurring | MasterChef / staking forks | SC02 — *reward/debt math desync (double-claim, inflated pending)* | varies | P2 | promoted |
+| unverified-flashloan-callback | recurring | lending forks | SC05 — *flash-loan/callback hook callable by a spoofed provider without verifying the caller* | varies | P2 | promoted |
+| qubit-bridge-deposit-logic | 2022-01 | Qubit | SC02 — *bridge credits deposits for a zero/!-validated token address* | ~$80M | P2 | promoted (id `bridge-deposit-no-code-token`) |
+| first-deposit-amm-skim | recurring | AMM pairs | SC07 — *empty-pool first-deposit / skim share manipulation (AMM-pair variant of inflation)* | varies | P3 | promoted |
 
 > **How to consume this (the durable way — per the user's choice 2026-06-02):** do NOT
 > copy DeFiHackLabs PoC code. For each row: study the primary post-mortem (+ the DHL

@@ -24,6 +24,17 @@ forge test -vv
 | `test/LoopscaleOracle.t.sol` | SC03/SC02 | Loopscale spot-price ($5.8M, EVM model): collateral priced off a thin pool's spot price is skewed in-tx for a ~100× over-borrow; a manipulation-resistant reference price holds. |
 | `test/LoopscaleCpi.t.sol` | SC03/SC05 | Loopscale unvalidated CPI ($5.8M, EVM model): reading a rate from a borrower-supplied provider lets a spoof inflate it ~1000×; pinning a trusted provider neutralizes it. |
 | `test/MangoOracle.t.sol` | SC03/SC02 | Mango oracle manipulation ($114M, EVM model): a thin token at 100% weight, priced off the market the attacker spikes, drains the reserve; a deviation circuit breaker + per-asset cap holds. |
+| `test/CTokenInflation.t.sol` | SC07/SC02 | cToken empty-market exchange-rate inflation (~$7M+): first minter donates underlying to inflate `cash/supply`, a victim's mint rounds to zero cTokens and is siphoned; seeded dead shares + zero-mint guard hold. |
+| `test/ApprovalDrain.t.sol` | SC05/SC01 | Router arbitrary-call approval drain (Socket/Seneca): a router forwarding `target.call(data)` while holding approvals lets an attacker call `transferFrom(victim,attacker)`; an adapter allow-list holds. |
+| `test/ProxyCollision.t.sol` | SC01 | Upgradeable-proxy storage-slot collision ($6M, Audius-class): a sequential-slot admin overlaps the impl's slot-0 var, so `initialize()` overwrites admin; EIP-1967 unstructured slots hold. |
+| `test/SignatureReplay.t.sol` | SC01 | Signature replay + ecrecover malleability: a no-nonce/no-domain signature is replayed and an `n−s` twin is a second valid sig; EIP-712 + per-account nonce + low-s check hold. |
+| `test/UnprotectedPrivileged.t.sol` | SC01 | Missing access control (PAID-class): ungated `mint` + re-callable `initialize` let anyone print supply / seize ownership; `onlyOwner` + a one-shot initializer hold. |
+| `test/InsecureRandomness.t.sol` | SC09 | Predictable on-chain randomness: an attacker recomputes a block-var draw and only enters winning blocks; externally-supplied VRF randomness holds. |
+| `test/WeirdErc20Accounting.t.sol` | SC02 | Fee-on-transfer / weird-ERC20 accounting: crediting the requested amount on a fee-on-transfer token makes `sum(credited) > balance` and shorts late withdrawers; crediting the measured balance delta holds. |
+| `test/IncorrectRewardAccounting.t.sol` | SC02 | MasterChef reward-debt desync: a harvest that pays `pending` without advancing `rewardDebt` is re-harvestable and drains the pool; checkpointing `rewardDebt` holds. |
+| `test/UnverifiedCallback.t.sol` | SC05/SC01 | Unverified flash-loan/external callback: an `onFlashLoan` callback with no `msg.sender`/`initiator` check is called directly to drain working capital; caller + initiator checks hold. |
+| `test/BridgeNoCodeToken.t.sol` | SC02 | Bridge no-code-token deposit (Qubit $80M): a low-level `transferFrom` to a codeless address returns success, so the bridge credits a deposit that never moved; a code-existence + allow-list check holds. |
+| `test/FirstDepositSkim.t.sol` | SC07 | AMM-pair first-deposit skim (UniV2-fork): no `MINIMUM_LIQUIDITY` lock lets the first LP donate to inflate share price so a later LP mints zero LP and is skimmed; locking `MINIMUM_LIQUIDITY` + `require(liquidity>0)` hold. |
 
 Run one: `forge test --match-contract InflationAttack -vv`
 
