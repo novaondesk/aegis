@@ -185,3 +185,17 @@ Legend: 🤖 = an automated tool/rule can flag candidates · 👁 = needs human 
 - [CryptoHawking: Oracle Manipulation — Stale Chainlink Feeds](https://www.cryptohawking.com/blog/oracle-manipulation-chainlink-staleness)
 - [Chainstack: Base RPC Providers 2026](https://chainstack.com/base-rpc-providers-2026/)
 - [Messari: State of the OP Stack Q1 2026](https://messari.io/report/state-of-the-op-stack-q1-2026)
+
+### MMR Verifier Correctness (Bridge Proof Verification)
+- [ ] For bridges using MMR (Merkle Mountain Range) verification: Does the verifier
+  reject out-of-bounds leaf indices? Are duplicate leaf indices forbidden? Is there a
+  post-loop check that all provided leaves were consumed? Are empty/trailing proofs
+  rejected? Is the challenge/dispute period non-zero?
+  - **Code smell:** MMR verifier that skips unconsumed leaves without checking; no
+    duplicate index rejection; challengePeriod set to zero
+  - **Exploit:** Hyperbridge ($237K extracted, 1B tokens minted, April 2026) — out-of-bounds
+    leaf silently skipped by MMR peak loop, attacker forged cross-chain message to seize
+    admin+minter on bridged DOT. Same bug class found in 3 independent Merkle libraries.
+  - **Mitigation:** Add `if (leafIter.length != 0) revert OutOfBoundsLeaves()` after peak
+    loop; require strictly increasing leaf indices; reject empty proofs; enforce non-zero
+    challengePeriod; use continuous structural fuzzing (Polytope Labs harnesses)

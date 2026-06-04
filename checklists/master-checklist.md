@@ -322,3 +322,20 @@ losses.
 2. Walk every 👁 item by hand — these are where bounties live.
 3. For any "yes/maybe", write a one-line hypothesis → prove with a Foundry PoC.
 4. New exploit studied? Backport a sharper item here + a semgrep rule + an invariant.
+
+- [ ] 👁 **SC02-MMR-BOUNDS:** For MMR/Merkle verifiers: After the peak/proof decomposition
+      loop, are unconsumed leaves explicitly rejected? Are duplicate leaf indices forbidden?
+      Is the proof validated to be non-empty and canonical (no trailing data)?
+      *Hyperbridge: $237K extracted, 1B tokens minted — out-of-bounds leaf silently
+      skipped by peak loop. Same bug class found in 3 independent Merkle libraries.*
+- [ ] 👁 **SC02-PROOF-BIND:** For cross-chain message handlers: Is each message
+      cryptographically bound to its proof, or can a proof for one message validate a
+      different message? Can an attacker recycle data from a previously legitimate
+      transaction to construct a forged proof? *Hyperbridge: attacker decoupled proof
+      from message — proof for a real transaction validated a forged ChangeAssetAdmin.*
+- [ ] 👁 **SC02-CHALLENGE-PERIOD:** For bridge contracts with a challenge/dispute period:
+      Is the challenge period non-zero and sufficient for validators/fishermen to detect
+      and dispute forged commitments? Can it be set to zero by governance? A zero
+      challenge period means forged state commitments execute instantly with no recourse.
+      *Hyperbridge: challengePeriod was 0, disabling the built-in defense against forged
+      proofs. The attacker's ChangeAssetAdmin executed with no dispute window.*
