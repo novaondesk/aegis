@@ -16,7 +16,7 @@ challenge → SWEEP the catalog → PROVE by filling in the challenge's `test_*`
 | 4 | Side Entrance | SC02/SC04 flashloan re-deposit | ✅ |
 | 5 | The Rewarder | SC02 claim-accounting (repeat claim) | ✅ |
 | 6 | Selfie | **`beanstalk-governance-flashloan`** | ✅ |
-| 7 | Compromised | — | ⏳ |
+| 7 | Compromised | info-exposure → oracle manipulation | ✅ |
 | 8 | Puppet | **`mango-oracle-manipulation` / `loopscale-oracle-spot-price`** | ✅ |
 | 9 | Puppet V2 | **oracle spot-price manipulation** | ✅ |
 | 10 | Puppet V3 | oracle (TWAP) | ⏳ |
@@ -29,7 +29,7 @@ challenge → SWEEP the catalog → PROVE by filling in the challenge's `test_*`
 | 17 | Curvy Puppet | oracle (Curve) | ⏳ |
 | 18 | Withdrawal | `verus-bridge-merkle-forgery` | ⏳ |
 
-(8 / 18 so far — work in progress.)
+(9 / 18 so far — work in progress.)
 
 ## How to run
 
