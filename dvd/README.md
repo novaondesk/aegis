@@ -1,0 +1,51 @@
+# dvd/ — Aegis vs. Damn Vulnerable DeFi v4
+
+Testing Aegis on [Damn Vulnerable DeFi v4](https://www.damnvulnerabledefi.xyz/) — the DeFi-focused
+sibling of Ethernaut. Unlike Ethernaut (many "technique" levels), **DVD stresses exactly the catalog's
+strongest classes**: oracle manipulation, flashloans, governance, reentrancy, proxies, merkle/bridge.
+Each challenge is solved with the [`aegis-audit`](../skills/aegis-audit/SKILL.md) loop: RECON the
+challenge → SWEEP the catalog → PROVE by filling in the challenge's `test_*` and passing `_isSolved()`.
+
+## Status
+
+| # | Challenge | Catalog detector | Status |
+|---|-----------|------------------|--------|
+| 1 | Unstoppable | `erc4626-inflation` (donation → DoS) | ✅ |
+| 2 | Naive Receiver | — | ⏳ |
+| 3 | Truster | **`approval-drain-arbitrary-call`** | ✅ |
+| 4 | Side Entrance | SC02/SC04 flashloan re-deposit | ✅ |
+| 5 | The Rewarder | — | ⏳ |
+| 6 | Selfie | `beanstalk-governance-flashloan` | ⏳ |
+| 7 | Compromised | — | ⏳ |
+| 8 | Puppet | `mango-oracle-manipulation` / `loopscale-oracle-spot-price` | ⏳ |
+| 9 | Puppet V2 | oracle (price-manip) | ⏳ |
+| 10 | Puppet V3 | oracle (TWAP) | ⏳ |
+| 11 | Free Rider | SC02 logic | ⏳ |
+| 12 | Backdoor | proxy/wallet factory | ⏳ |
+| 13 | Climber | `proxy-storage-collision` / timelock | ⏳ |
+| 14 | Wallet Mining | create2/deterministic addr | ⏳ |
+| 15 | ABI Smuggling | calldata manipulation | ⏳ |
+| 16 | Shards | SC07 precision | ⏳ |
+| 17 | Curvy Puppet | oracle (Curve) | ⏳ |
+| 18 | Withdrawal | `verus-bridge-merkle-forgery` | ⏳ |
+
+(3 / 18 so far — work in progress.)
+
+## How to run
+
+DVD v4 has heavy dependencies (Uniswap v2/v3, Safe, permit2, solady/solmate) installed as git
+submodules, so it isn't vendored here. To reproduce:
+
+```bash
+git clone https://github.com/theredguild/damn-vulnerable-defi
+cd damn-vulnerable-defi
+git submodule update --init --recursive
+# drop our solved test files over the originals:
+cp -r /path/to/aegis/dvd/solutions/test/* test/
+forge test
+```
+
+Our solutions live in [`solutions/test/`](solutions/) — the original DVD challenge `test/*.t.sol`
+files with the `test_*` solution function filled in (and any attacker helper contract appended). The
+challenge contracts and `setUp`/`_isSolved` are DVD's, unchanged (MIT,
+github.com/theredguild/damn-vulnerable-defi).
