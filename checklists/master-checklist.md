@@ -212,7 +212,21 @@ Legend: 🤖 = an automated tool/rule can flag candidates · 👁 = needs human 
       vulnerability class they missed is the one that gets exploited. *THORChain:
       Trail of Bits audit predated CVE-2023-33241 disclosure by months.*
 
----
+## X05 — Contract Lifecycle / Legacy Risk 👁 (deprecated ≠ disabled)
+
+- [ ] 👁 **X05-LEGACY-APPROVAL:** When deprecating a contract, are user approvals explicitly
+      revoked or migrated? A "deprecated" contract that still holds active ERC20/TRC20 approvals
+      is a standing drain vector — anyone who can call the contract can exploit the approvals.
+      *Transit Finance: $1.88M (2026) — same contract exploited for $21M in 2022, "deprecated"
+      by removing the frontend, but approvals persisted for 3.5 years.*
+- [ ] 👁 **X05-LEGACY-PAUSE:** Does every deployable contract have a `pause()` or `emergencyStop()`
+      mechanism that can be triggered by the admin? If a contract is deprecated, is it actually
+      paused (not just removed from the frontend)? Direct on-chain calls bypass frontend removal.
+      *Transit Finance: legacy contract had no pause mechanism; "deprecation" was purely off-chain.*
+- [ ] 👁 **X05-LEGACY-SCAN:** Is there a periodic scan for deprecated contracts that still hold
+      active approvals? Approval management tools (Revoke.cash, etc.) can flag stale approvals,
+      but only if users know to check. Protocols should proactively notify users to revoke
+      approvals to deprecated contracts.
 
 ---
 
