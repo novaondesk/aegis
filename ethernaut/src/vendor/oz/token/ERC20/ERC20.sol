@@ -79,6 +79,13 @@ contract ERC20 is IERC20 {
         emit Approval(owner, spender, amount);
     }
 
+    function _burn(address account, uint256 amount) internal {
+        require(_balances[account] >= amount, "ERC20: burn exceeds balance");
+        _balances[account] -= amount;
+        _totalSupply -= amount;
+        emit Transfer(account, address(0), amount);
+    }
+
     event Transfer(address indexed from, address indexed to, uint256 value);
     event Approval(address indexed owner, address indexed spender, uint256 value);
 }
