@@ -62,6 +62,26 @@ Legend: 🤖 = an automated tool/rule can flag candidates · 👁 = needs human 
 - [ ] **SC02-LEGACY:** Are deprecated/legacy contracts still accessible on-chain? Even if
       the frontend disables them, can they be called directly? *Transit Finance: $1.88M —
       deprecated TRON contract from 2022 with known vulnerabilities still callable.*
+- [ ] 👁 **SC02-SOLVER-1:** Does the contract use an **iterative solver** (Newton-Raphson,
+      binary search, fixed-point iteration) to compute a critical invariant (supply, price,
+      rate)? If so: (a) are domain preconditions (e.g., `A·Σ ≥ D·Π`) explicitly checked
+      before and during iteration? (b) does the solver detect and **revert on divergence**
+      (product term → 0, oscillation, non-convergence)? (c) is arithmetic in invariant-critical
+      paths **checked** (not `unsafe_sub` / `unchecked`)? *Yearn yETH: $9M — solver divergence
+      drove Π to 0, then `unsafe_sub` underflow minted 2.35 × 10⁵⁶ LP tokens.*
+- [ ] 👁 **SC02-REINIT-1:** Is there a **bootstrap/initialization path** that can be re-entered
+      after the contract has been used in production? Can `prev_supply == 0` (or equivalent
+      "empty pool" state) be reached while ERC-20 balances still exist (e.g., via POL)?
+      If so, the initialization path becomes an exploit primitive — it was designed for
+      first-deposit math, not adversarial inputs on a mature pool. *Yearn yETH: $9M —
+      after draining the pool, the attacker re-entered the bootstrap path with dust deposits
+      that triggered a uint256 underflow in the initialization math.*
+- [ ] 👁 **SC02-POL-1:** Does the protocol maintain **Protocol-Owned Liquidity (POL)** that
+      absorbs supply reconciliation (burns/mints to match internal invariant `D` vs
+      `totalSupply`)? Can an attacker manipulate `D` to trigger POL burns, offloading
+      the cost of over-minted LP onto the protocol rather than the attacker? *Yearn yETH:
+      $9M — `update_rates` burned yETH from the staking contract to reconcile the
+      attacker-inflated `D`, draining POL instead of the attacker's balance.*
 
 
 ## SC03 — Price Oracle Manipulation 👁🤖
@@ -111,6 +131,12 @@ Legend: 🤖 = an automated tool/rule can flag candidates · 👁 = needs human 
       but `<<` silently truncates (Move, Rust `wrapping_shl`) are especially dangerous.
       *Cetus: wrong constant in `checked_shlw` mask — `0xff...ff << 192` instead of
       `1 << 192` — let a ~2^192 intermediate pass undetected.* 🤖
+- [ ] 👁 **SC07-UNSAFE-1:** Are `unsafe_math` / `unchecked` blocks used in **invariant-critical
+      calculations** where the operands can be influenced by user input (deposits, withdrawals,
+      swaps)? If `A - B` can underflow due to adversarial inputs, the result wraps to
+      `uint256` max instead of reverting — turning a domain violation into a catastrophic
+      mint or drain. *Yearn yETH: $9M — `unsafe_sub(A*Σ, D*Π)` in `_calc_supply` wrapped
+      to ~2^256 when `D*Π > A*Σ`, minting 2.35 × 10⁵⁶ LP tokens.*
 
 ## SC01 — Access Control 🤖👁
 - [ ] Every privileged function gated (`onlyOwner`/role) — including initializers,
@@ -199,7 +225,21 @@ Legend: 🤖 = an automated tool/rule can flag candidates · 👁 = needs human 
       vulnerability class they missed is the one that gets exploited. *THORChain:
       Trail of Bits audit predated CVE-2023-33241 disclosure by months.*
 
----
+## X05 — Contract Lifecycle / Legacy Risk 👁 (deprecated ≠ disabled)
+
+- [ ] 👁 **X05-LEGACY-APPROVAL:** When deprecating a contract, are user approvals explicitly
+      revoked or migrated? A "deprecated" contract that still holds active ERC20/TRC20 approvals
+      is a standing drain vector — anyone who can call the contract can exploit the approvals.
+      *Transit Finance: $1.88M (2026) — same contract exploited for $21M in 2022, "deprecated"
+      by removing the frontend, but approvals persisted for 3.5 years.*
+- [ ] 👁 **X05-LEGACY-PAUSE:** Does every deployable contract have a `pause()` or `emergencyStop()`
+      mechanism that can be triggered by the admin? If a contract is deprecated, is it actually
+      paused (not just removed from the frontend)? Direct on-chain calls bypass frontend removal.
+      *Transit Finance: legacy contract had no pause mechanism; "deprecation" was purely off-chain.*
+- [ ] 👁 **X05-LEGACY-SCAN:** Is there a periodic scan for deprecated contracts that still hold
+      active approvals? Approval management tools (Revoke.cash, etc.) can flag stale approvals,
+      but only if users know to check. Protocols should proactively notify users to revoke
+      approvals to deprecated contracts.
 
 ---
 
@@ -295,3 +335,20 @@ losses.
 2. Walk every 👁 item by hand — these are where bounties live.
 3. For any "yes/maybe", write a one-line hypothesis → prove with a Foundry PoC.
 4. New exploit studied? Backport a sharper item here + a semgrep rule + an invariant.
+
+- [ ] 👁 **SC02-MMR-BOUNDS:** For MMR/Merkle verifiers: After the peak/proof decomposition
+      loop, are unconsumed leaves explicitly rejected? Are duplicate leaf indices forbidden?
+      Is the proof validated to be non-empty and canonical (no trailing data)?
+      *Hyperbridge: $237K extracted, 1B tokens minted — out-of-bounds leaf silently
+      skipped by peak loop. Same bug class found in 3 independent Merkle libraries.*
+- [ ] 👁 **SC02-PROOF-BIND:** For cross-chain message handlers: Is each message
+      cryptographically bound to its proof, or can a proof for one message validate a
+      different message? Can an attacker recycle data from a previously legitimate
+      transaction to construct a forged proof? *Hyperbridge: attacker decoupled proof
+      from message — proof for a real transaction validated a forged ChangeAssetAdmin.*
+- [ ] 👁 **SC02-CHALLENGE-PERIOD:** For bridge contracts with a challenge/dispute period:
+      Is the challenge period non-zero and sufficient for validators/fishermen to detect
+      and dispute forged commitments? Can it be set to zero by governance? A zero
+      challenge period means forged state commitments execute instantly with no recourse.
+      *Hyperbridge: challengePeriod was 0, disabling the built-in defense against forged
+      proofs. The attacker's ChangeAssetAdmin executed with no dispute window.*

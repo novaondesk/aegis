@@ -3,6 +3,22 @@
 All notable changes to Aegis are documented here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/); versions follow [SemVer](https://semver.org/).
 
+## [2.5.0] — 2026-06-04
+
+Merged Nova's PR #10 (research-rolling).
+
+### Added
+- **3 new studied catalog entries** from Nova's research (catalog 31 → 34; all `studied`, PoCs pending):
+  `yearn-yeth-solver-underflow` ($9M — Newton-Raphson solver divergence + `unsafe_sub` underflow),
+  `transit-finance-legacy-approval-drain` ($1.88M — "deprecated" ≠ disabled; standing approvals on a
+  still-callable legacy contract), `hyperbridge-mmr-leaf-index` ($237K — MMR out-of-bounds leaf
+  verification bypass). Case studies under `docs/exploits/`; new checklist sections (SC02-SOLVER/REINIT/POL,
+  SC07-UNSAFE, X05 Contract-Lifecycle, SC02-MMR-BOUNDS/PROOF-BIND/CHALLENGE-PERIOD).
+
+### Merge notes
+- Resolved 13 conflicts by keeping `main`'s newer state (catalog 31 + wargame detectors, docs site,
+  ethernaut shims) and integrating Nova's net-new content. `poc` 64/64 and `ethernaut` 34/34 stay green.
+
 ## [2.4.0] — 2026-06-04
 
 DVD v4 18/18 + 4 wargame-mined detectors.

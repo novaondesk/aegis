@@ -116,6 +116,20 @@ kyberswap-tick, wormhole-sigverif, nomad-init, cream/rari/penpie reentrancy, pla
 becomes a full catalog unit (case study + entry + `Vulnerable`/`Safe`/test + checklist + semgrep);
 flip the row `todo → promoted`.
 
+Also **promote the 3 `studied` entries to `coded`** (they already have case studies + catalog
+entries + checklist items from Nova's PR #10 — they just need runnable PoCs):
+- **`yearn-yeth-solver-underflow`** (SC02/SC07, $9M) — model a weighted-stableswap solver where
+  Newton-Raphson divergence drives the product term Π→0 and `unsafe_sub(A·Σ, D·Π)` underflows to mint
+  ~2.35×10⁵⁶ LP from a dust deposit; `Safe<X>` checks the solver domain + uses checked arithmetic.
+- **`transit-finance-legacy-approval-drain`** (SC02) — a "deprecated" (frontend-removed but still
+  callable) router that forwards arbitrary calldata while holding standing approvals → drain; `Safe<X>`
+  is paused/approval-revoked. (Close cousin of `approval-drain-arbitrary-call`.)
+- **`hyperbridge-mmr-leaf-index`** (SC02) — an MMR proof verifier missing a leaf-index bounds check
+  (unconsumed leaves silently skipped) + no proof↔message binding → forge a cross-chain state proof;
+  `Safe<X>` bounds-checks + binds the proof. (Cousin of `verus-bridge-merkle-forgery`.)
+Add each PoC under `poc/test/`, flip the catalog `status: studied → coded` + set `poc`/`poc_cmd`, and
+add the block to `docs/pocs.md` (and bump the "29 coded" count in README / `the-catalog.md`).
+
 ### Phase 4 — close the remaining gap classes as detectors
 Not yet catalog detectors: information-exposure (`private` ≠ secret), integer/storage underflow,
 `tx.origin` auth (has a semgrep rule, no entry), untrusted-interface assumptions, a generic

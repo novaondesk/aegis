@@ -39,7 +39,7 @@ Every entry is a detector with these fields:
 | `poc` / `poc_cmd` | runnable proof + how to run it |
 | `fork_poc` | (optional) a real mainnet-fork replay |
 
-## All 31 detectors
+## All 34 detectors
 
 | # | Detector (`id`) | Class | Chains | Status |
 |---|---|---|---|---|
@@ -74,10 +74,15 @@ Every entry is a detector with these fields:
 | 29 | [`calldata-abi-smuggling`](pocs#calldata-abi-smuggling) | SC05/SC01 | evm | coded |
 | 30 | [`forced-ether-balance-assumption`](pocs#forced-ether-balance-assumption) | SC02 | evm | coded |
 | 31 | [`dos-griefing-revert`](pocs#dos-griefing-revert) | SC10/SC02 | evm | coded |
+| 32 | `yearn-yeth-solver-underflow` | SC02/SC07 | evm | studied |
+| 33 | `transit-finance-legacy-approval-drain` | SC02 | evm/tron | studied |
+| 34 | `hyperbridge-mmr-leaf-index` | SC02 | substrate/multi | studied |
 
-> The last four were mined from the **wargames** (DVD v4 Naive Receiver / ABI Smuggling, Ethernaut
-> Force/King/Denial/Switch) — exactly the loop working as intended: a level solved by a general
-> technique becomes a catalog detector.
+> Entries 28–31 were mined from the **wargames** (DVD v4 Naive Receiver / ABI Smuggling, Ethernaut
+> Force/King/Denial/Switch) — the loop working as intended: a level solved by a general technique
+> becomes a catalog detector. Entries 32–34 are recent case studies (Yearn yETH solver underflow,
+> Transit Finance legacy-approval drain, Hyperbridge MMR verifier) still in `studied` status — see
+> their write-ups under [`docs/exploits/`](https://github.com/novaondesk/aegis/tree/main/docs/exploits).
 >
 > See **[PoCs](pocs)** for what each detector catches and its runnable proof. *(EVM model)* entries
 > reproduce a non-EVM incident's broken invariant in Solidity so it runs in the Foundry harness.
