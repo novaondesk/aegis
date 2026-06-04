@@ -18,13 +18,13 @@ challenge → SWEEP the catalog → PROVE by filling in the challenge's `test_*`
 | 6 | Selfie | **`beanstalk-governance-flashloan`** | ✅ |
 | 7 | Compromised | — | ⏳ |
 | 8 | Puppet | **`mango-oracle-manipulation` / `loopscale-oracle-spot-price`** | ✅ |
-| 9 | Puppet V2 | oracle (price-manip) | ⏳ |
+| 9 | Puppet V2 | **oracle spot-price manipulation** | ✅ |
 | 10 | Puppet V3 | oracle (TWAP) | ⏳ |
 | 11 | Free Rider | SC02 logic | ⏳ |
 | 12 | Backdoor | proxy/wallet factory | ⏳ |
 | 13 | Climber | `proxy-storage-collision` / timelock | ⏳ |
 | 14 | Wallet Mining | create2/deterministic addr | ⏳ |
-| 15 | ABI Smuggling | calldata manipulation | ⏳ |
+| 15 | ABI Smuggling | **calldata manipulation** (Switch family) | ✅ |
 | 16 | Shards | SC07 precision | ⏳ |
 | 17 | Curvy Puppet | oracle (Curve) | ⏳ |
 | 18 | Withdrawal | `verus-bridge-merkle-forgery` | ⏳ |
