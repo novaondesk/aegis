@@ -22,14 +22,14 @@ challenge → SWEEP the catalog → PROVE by filling in the challenge's `test_*`
 | 10 | Puppet V3 | oracle (TWAP) | ⏳ |
 | 11 | Free Rider | **SC02 logic** (pay-the-buyer + total msg.value) | ✅ |
 | 12 | Backdoor | proxy/wallet factory | ⏳ |
-| 13 | Climber | `proxy-storage-collision` / timelock | ⏳ |
+| 13 | Climber | **`proxy-storage-collision`/upgrade** (timelock CEI) | ✅ |
 | 14 | Wallet Mining | create2/deterministic addr | ⏳ |
 | 15 | ABI Smuggling | **calldata manipulation** (Switch family) | ✅ |
 | 16 | Shards | SC07 precision | ⏳ |
 | 17 | Curvy Puppet | oracle (Curve) | ⏳ |
 | 18 | Withdrawal | `verus-bridge-merkle-forgery` | ⏳ |
 
-(11 / 18 so far — work in progress.)
+(12 / 18 so far — work in progress.)
 
 ## How to run
 
