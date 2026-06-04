@@ -14,7 +14,7 @@ challenge → SWEEP the catalog → PROVE by filling in the challenge's `test_*`
 | 2 | Naive Receiver | — | ⏳ |
 | 3 | Truster | **`approval-drain-arbitrary-call`** | ✅ |
 | 4 | Side Entrance | SC02/SC04 flashloan re-deposit | ✅ |
-| 5 | The Rewarder | — | ⏳ |
+| 5 | The Rewarder | SC02 claim-accounting (repeat claim) | ✅ |
 | 6 | Selfie | **`beanstalk-governance-flashloan`** | ✅ |
 | 7 | Compromised | — | ⏳ |
 | 8 | Puppet | **`mango-oracle-manipulation` / `loopscale-oracle-spot-price`** | ✅ |
@@ -29,7 +29,7 @@ challenge → SWEEP the catalog → PROVE by filling in the challenge's `test_*`
 | 17 | Curvy Puppet | oracle (Curve) | ⏳ |
 | 18 | Withdrawal | `verus-bridge-merkle-forgery` | ⏳ |
 
-(5 / 18 so far — work in progress. Core catalog classes validated: DoS, approval-drain, flashloan-logic, governance-flashloan, oracle-manipulation.)
+(8 / 18 so far — work in progress.)
 
 ## How to run
 
