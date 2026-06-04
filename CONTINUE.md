@@ -81,13 +81,54 @@ Ordered by value/tractability:
 When you finish a level: update `ethernaut/README.md` + `docs/ethernaut-wargame.md` counts/table,
 append `research-log/`, commit (promote) + push.
 
-## Other open work (lower priority)
-- **Backlog** (`intake/backlog.md`, 9 `todo` seed rows): euler-donation-liquidation, curve-vyper-reentrancy,
-  kyberswap-tick, wormhole-sigverif, nomad-init, cream/rari/penpie reentrancy, platypus-logic. Each
-  becomes a full catalog unit; flip the row `todo → promoted` when done.
-- **Remaining classic-Ethernaut gap classes** not yet catalog detectors: information-exposure
-  (`private` ≠ secret), integer/storage underflow, `tx.origin` auth (has a semgrep rule, no entry),
-  untrusted-interface assumptions, a generic precision-asymmetry detector (DVD Shards).
+## After that — the roadmap (do these in order, once the 6 levels above are done)
+
+### Phase 2 — new wargame: Paradigm CTF
+Same loop as Ethernaut/DVD: clone the public foundry ports (`paradigm-ctf-2021`, `-2022`, `-2023` —
+verify the exact challenge list against the repos), RECON each challenge → SWEEP the catalog → PROVE
+by exploiting it and asserting the challenge's win hook. Put solutions in a new `paradigm/` harness
+mirroring `ethernaut/` (vendored challenge source + minimal shims + `test/<Name>.t.sol`), and write
+`docs/paradigm-wargame.md`. **Only the smart-contract challenges are in scope** — skip the crypto /
+reversing / pwn / EVM-bytecode-puzzle tracks (SourceCode/quine, JOP, Electric Sheep, Trapdoor, etc.).
+
+Aegis-relevant challenges (sweep result — confirm against the real source before coding):
+
+| Challenge (year) | Bug | Catalog detector |
+|---|---|---|
+| **Sentiment** (2022) | Balancer pool read-only reentrancy | `read-only-reentrancy` ✅ |
+| **Merkledrop** (2022) | merkle multiproof / duplicate-leaf forgery | `verus-bridge-merkle-forgery` fam ✅ |
+| **Broker** (2021) | Uniswap V2 spot-price manipulation → bad borrow | `mango-oracle-manipulation` / `loopscale-oracle-spot-price` ✅ |
+| **Bank / TokenBank** (2021) | ERC-223 `tokenFallback` reentrancy | `cei-reentrancy` ✅ |
+| **Upgrade / UpgradeV2** (2021) | uninitialized UUPS proxy seized | `unprotected-privileged-fn` / `proxy-storage-collision` ✅ |
+| **RPGItem / Dropper / Dai** (2022/23) | EIP-712 / permit signature abuse | `signature-replay-malleability` ✅ |
+| **Rescue** (2022) | MasterChef accidental-token accounting | `incorrect-reward-accounting` ✅ |
+| **Grains of Sand** (2023) | stablecoin swap rounding / dust extraction | `weird-erc20-accounting` / precision ✅ |
+| **Vanity** (2022) | `ecrecover` → `address(0)` accepted (auth bypass) | **gap** → new signature-validation detector |
+| **Vault** (2021) | reading "private" storage slots | **gap** → info-exposure detector |
+| **Lockbox / Lockbox2** (2021/22) | calldata/ABI crafting | ties into `calldata-abi-smuggling` |
+
+~8–10 map straight onto existing detectors (strong validation); ~3 surface new gaps. Heavier
+fork/infra setup than DVD — budget for plumbing. Update `README` + the docs site count when done.
+
+### Phase 3 — burn down the catalog backlog
+`intake/backlog.md` has **9 `todo` seed rows**: euler-donation-liquidation, curve-vyper-reentrancy,
+kyberswap-tick, wormhole-sigverif, nomad-init, cream/rari/penpie reentrancy, platypus-logic. Each
+becomes a full catalog unit (case study + entry + `Vulnerable`/`Safe`/test + checklist + semgrep);
+flip the row `todo → promoted`.
+
+### Phase 4 — close the remaining gap classes as detectors
+Not yet catalog detectors: information-exposure (`private` ≠ secret), integer/storage underflow,
+`tx.origin` auth (has a semgrep rule, no entry), untrusted-interface assumptions, a generic
+precision-asymmetry detector (DVD Shards), and the EIP-7702 delegation-abuse class (from UniqueNFT /
+Cashback above). Several of these are *also* surfaced by Paradigm (Vanity, Vault) — fold them in.
+
+### Phase 5 — make the `fork_poc` links real
+The catalog's `fork_poc:` references to DeFiHackLabs are mostly documentation; only 4 real mainnet-fork
+replays exist in `sim/`. Add `sim/` replays for the highest-loss mined classes so the cross-links are
+actually run, not just cited.
+
+> Always append a dated `research-log/` entry per session, and keep `README` + the docs site
+> (`the-catalog.md`, `pocs.md`) counts in sync with `catalog/exploits.yaml`.
 
 ## How your work will be reviewed
 Open a small, focused commit per level/detector (or a PR). The reviewer checks: (1) `cd ethernaut &&
