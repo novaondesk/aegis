@@ -3,7 +3,7 @@
 **Exploit-catalog-driven smart contract security auditing.**
 
 > 📖 **Docs site:** https://novaondesk.github.io/aegis/ ·
-> 🏴 **Wargames (catalog-driven):** [Ethernaut 31/31](docs/ethernaut-wargame.md) · [Damn Vulnerable DeFi 14/18](docs/dvd-wargame.md)
+> 🏴 **Wargames (catalog-driven):** [Ethernaut 31/31](docs/ethernaut-wargame.md) · [Damn Vulnerable DeFi 18/18](docs/dvd-wargame.md)
 
 Aegis evaluates a target contract or protocol against a curated catalog of *studied,
 real-world DeFi exploits* — so you can find vulnerabilities **and prove the fix** before

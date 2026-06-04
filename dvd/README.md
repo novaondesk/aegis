@@ -23,15 +23,15 @@ challenge → SWEEP the catalog → PROVE by filling in the challenge's `test_*`
 | 11 | Free Rider | **SC02 logic** (pay-the-buyer + total msg.value) | ✅ |
 | 12 | Backdoor | **SC01 init-delegatecall backdoor** (Safe setup) | ✅ |
 | 13 | Climber | **`proxy-storage-collision`/upgrade** (timelock CEI) | ✅ |
-| 14 | Wallet Mining | create2/deterministic addr | ⏳ |
+| 14 | Wallet Mining | **SC01 + slot-0 storage collision** (create2 salt-mine, single-tx) | ✅ |
 | 15 | ABI Smuggling | **calldata manipulation** (Switch family) | ✅ |
-| 16 | Shards | SC07 precision | ⏳ |
-| 17 | Curvy Puppet | oracle (Curve) | ⏳ |
-| 18 | Withdrawal | `verus-bridge-merkle-forgery` | ⏳ |
+| 16 | Shards | SC07 precision | ✅ |
+| 17 | Curvy Puppet | **`read-only-reentrancy`** (Curve `get_virtual_price`, mainnet fork) | ✅ |
+| 18 | Withdrawal | `verus-bridge-merkle-forgery` | ✅ |
 
-**14 / 18 solved** — every challenge that exercises a catalog detector class. The remaining 4 are
-intricate puzzle-mechanics (precision rounding, create2 mining, an L2→L1 bridge race, a Curve fork).
-Full write-up: [`../docs/dvd-wargame.md`](../docs/dvd-wargame.md).
+**18 / 18 solved** — the entire DVD v4 set falls to the catalog-driven loop, including the two hardest:
+Wallet Mining's single-tx storage-collision puzzle and Curvy Puppet's read-only-reentrancy liquidation
+over a live mainnet fork. Full write-up: [`../docs/dvd-wargame.md`](../docs/dvd-wargame.md).
 
 ## How to run
 

@@ -1,75 +1,94 @@
 # Aegis vs. Damn Vulnerable DeFi v4
 
 Aegis run against [Damn Vulnerable DeFi v4](https://www.damnvulnerabledefi.xyz/) — the DeFi-focused
-sibling of Ethernaut. Where the Ethernaut report showed many "general technique" levels, **DVD is the
-real validation**: it stresses exactly the catalog's strongest classes (oracle manipulation,
-flashloans, governance, upgrades, accounting), and the detectors mined from $100M+ hacks map straight
-onto it. Each challenge is solved with the [`aegis-audit`](../skills/aegis-audit/SKILL.md) loop: RECON
-the challenge → SWEEP the catalog → PROVE by filling in the challenge's `test_*` and passing
-`_isSolved()`.
+sibling of Ethernaut. Where the Ethernaut report had many "general technique" levels, **DVD is the
+real validation**: it stresses the catalog's strongest classes (oracle manipulation, flashloans,
+governance, upgrades, accounting), and the detectors mined from $100M+ hacks map straight onto it.
+Each challenge is solved with the [`aegis-audit`](../skills/aegis-audit/SKILL.md) loop — RECON the
+challenge → SWEEP the catalog → PROVE by filling in `test_*` and passing `_isSolved()`.
 
-**Status: 14 / 18 solved** (all challenges that exercise a catalog detector class). The remaining 4
-are intricate puzzle-mechanics (precision rounding, create2 address-mining, an L2→L1 bridge ordering
-race, and a Curve read-only-reentrancy on a mainnet fork) — see the bottom.
+**Status: 18 / 18 solved.** Every challenge in DVD v4 falls to the catalog-driven loop, including the
+two hardest — Wallet Mining (create2 address-mining + a slot-0 storage-collision re-init, all in one
+player tx) and Curvy Puppet (Curve `get_virtual_price` read-only reentrancy liquidation over a live
+mainnet fork). Neither adds a *new* catalog class: Curvy Puppet *is* our existing `read-only-reentrancy`
+detector, and Wallet Mining is SC01 access-control + a deterministic-address puzzle.
 
-## Validation — the catalog detectors that fired
+## The catalog detectors that fired (the headline)
+
+The same detectors that catch real mainnet hacks solved a DeFi CTF built independently:
 
 | DVD challenge | Catalog detector | Real-world twin |
 |---|---|---|
-| **Truster** | [`approval-drain-arbitrary-call`](exploits/approval-drain-arbitrary-call-2024-02.md) | Socket Gateway |
-| **Selfie** | [`beanstalk-governance-flashloan`](exploits/beanstalk-governance-flashloan-2022-04-17.md) | Beanstalk ($181M) |
-| **Puppet / Puppet V2 / Puppet V3** | [`mango-oracle-manipulation`](exploits/mango-markets-oracle-manipulation.md) · [`loopscale-oracle-spot-price`](exploits/loopscale-oracle-2025-04.md) | Mango ($114M) / Loopscale |
-| **Climber** | [`proxy-storage-collision`](exploits/proxy-storage-collision-2022-07.md) (upgrade/timelock) | Audius |
-| **Unstoppable** | [`erc4626-inflation`](exploits/erc4626-inflation-attack.md) (donation → DoS) | recurring vault inflation |
-| **Compromised** | oracle manipulation (spot/median) + info-exposure | Mango family |
+| **Truster** | `approval-drain-arbitrary-call` | Socket Gateway |
+| **Selfie** | `beanstalk-governance-flashloan` | Beanstalk ($181M) |
+| **Puppet / V2 / V3** | `mango-oracle-manipulation` · `loopscale-oracle-spot-price` | Mango ($114M) / Loopscale |
+| **Climber** | `proxy-storage-collision` (upgrade/timelock) | Audius |
+| **Unstoppable** | `erc4626-inflation` (donation → DoS) | recurring vault inflation |
+| **Compromised** | oracle manipulation + info-exposure | Mango family |
+| **Withdrawal** | bridge message-verification (`verus-bridge-merkle-forgery` family) | Verus / Nomad |
 
-That's the headline: **the same detectors that catch real mainnet hacks solve a DeFi CTF built
-independently.** Puppet V3 was even solved over a **live mainnet fork** (the catalog + our
-[fork-simulation harness](fork-simulation) in one flow).
+Puppet V3 and Curvy Puppet run over a **live mainnet fork** (real Curve/Lido/Aave) — catalog + our
+[fork-simulation harness](fork-simulation) in one flow.
 
-## Full coverage (14 / 18)
+## How each was solved (18 / 18)
 
-| # | Challenge | Class | Solve | Catalog |
-|---|-----------|-------|-------|---------|
-| 1 | Unstoppable | SC02/SC07 | ✅ | `erc4626-inflation` (donation breaks `balanceOf==shares` → flashloan DoS) |
-| 2 | Naive Receiver | SC01 | ✅ | meta-tx `_msgSender()` spoof via the forwarder (no exact entry) |
-| 3 | Truster | SC05/SC01 | ✅ | **`approval-drain-arbitrary-call`** — `functionCall` → approve → drain |
-| 4 | Side Entrance | SC02/SC04 | ✅ | flashloan callback re-deposits to pass the balance check |
-| 5 | The Rewarder | SC02 | ✅ | claim-accounting: transfer every loop, bitmap marked once → repeat claim |
-| 6 | Selfie | SC02/SC04 | ✅ | **`beanstalk-governance-flashloan`** — flashloan votes → `emergencyExit` |
-| 7 | Compromised | SC03 | ✅ | leaked oracle keys (info-exposure) → median price manipulation |
-| 8 | Puppet | SC03 | ✅ | **oracle spot-price** (Uniswap V1 reserve ratio) |
-| 9 | Puppet V2 | SC03 | ✅ | **oracle spot-price** (Uniswap V2) |
-| 10 | Puppet V3 | SC03 | ✅ | **oracle TWAP** (Uniswap V3, mainnet fork) |
-| 11 | Free Rider | SC02 | ✅ | marketplace pays the buyer + checks total `msg.value` (flash-swap) |
-| 12 | Backdoor | SC01 | ✅ | Gnosis Safe `setup` delegatecall → inject `approve` backdoor |
-| 13 | Climber | SC01 | ✅ | **`proxy-storage-collision`/upgrade** — timelock CEI → UUPS upgrade drain |
-| 15 | ABI Smuggling | SC05 | ✅ | calldata manipulation — permitted selector at the checked offset |
-| 14 | Wallet Mining | SC01 | ⏳ | create2/deterministic-address mining + upgradeable authorizer |
-| 16 | Shards | SC07 | ⏳ | fractional-NFT precision: `fill` divides by `totalShards`, `cancel` doesn't |
-| 17 | Curvy Puppet | SC03/SC08 | ⏳ | Curve `get_virtual_price` read-only reentrancy (needs a mainnet fork) |
-| 18 | Withdrawal | SC02 | ⏳ | L2→L1 bridge: operator proof-bypass + finalize-ordering race |
+| # | Challenge | Class | How Aegis solved it |
+|---|-----------|-------|---------------------|
+| 1 | Unstoppable | SC02/SC07 | ✅ `erc4626-inflation`: donate 1 token directly → `balanceOf != totalShares` → `flashLoan` reverts forever → monitor pauses it |
+| 2 | Naive Receiver | SC01 | ✅ 10× fee-loans drain the receiver; then a `multicall` sub-call spoofs `_msgSender()==feeReceiver` to `withdraw` the pool — one signed forwarder request |
+| 3 | Truster | SC05/SC01 | ✅ `approval-drain-arbitrary-call`: `flashLoan(0,…,token,approve(attacker,all))` then `transferFrom` (one tx) |
+| 4 | Side Entrance | SC02/SC04 | ✅ flash-loan, the `execute` callback `deposit`s the ETH back (passes the balance check) crediting us, then `withdraw` |
+| 5 | The Rewarder | SC02 | ✅ `claimRewards` transfers every loop but marks the bitmap once → submit the player's own valid proof N times |
+| 6 | Selfie | SC02/SC04 | ✅ `beanstalk-governance-flashloan`: flash-loan the votes token → `delegate` → queue `emergencyExit` → execute |
+| 7 | Compromised | SC03 | ✅ decode the leaked HTTP bytes → 2 oracle keys → set median price ~0, buy NFT, set high, sell, drain, restore |
+| 8 | Puppet | SC03 | ✅ oracle spot-price: dump tokens to crash the Uniswap V1 reserve ratio, borrow the pool for tiny ETH |
+| 9 | Puppet V2 | SC03 | ✅ same on Uniswap V2: swap to crash the price, wrap ETH, borrow the pool |
+| 10 | Puppet V3 | SC03 | ✅ swap to move the V3 spot, `vm.warp(114s)` to shift the 10-min TWAP, borrow — over a **mainnet fork** |
+| 11 | Free Rider | SC02 | ✅ flash-swap WETH; `buyMany` pays the *new owner* (buyer) and checks total `msg.value` → buy all 6 for one price; claim the bounty |
+| 12 | Backdoor | SC01 | ✅ Gnosis Safe `setup`'s `to`/`data` delegatecall → inject `approve(attacker)` per beneficiary wallet, then drain the payouts (one tx) |
+| 13 | Climber | SC01 | ✅ `proxy-storage-collision`/upgrade: timelock runs actions before the scheduled-check → grant role + zero delay + transfer vault + self-schedule, then UUPS-upgrade to a sweeper |
+| 15 | ABI Smuggling | SC05 | ✅ calldata manipulation: put the permitted `withdraw` selector at the checked offset while `actionData` is `sweepFunds` |
+| 16 | Shards | SC07 | ✅ precision: `fill` cost rounds to 0 for tiny `want` (free), `cancel` refunds `want*rate/1e6` (no `/totalShards`) → free fill seeds DVT, a sized fill drains the marketplace |
+| 18 | Withdrawal | SC02 | ✅ `TokenBridge` sender-check is inverted + operator bypasses the merkle proof → drain to underflow the malicious withdrawal, pre-fail its `messageId`, refill; legit 3 pay out, #2 blocked |
+| 14 | Wallet Mining | SC01 | ✅ `AuthorizerUpgradeable.needsInit` (slot 0) collides with `TransparentProxy.upgrader` (slot 0) → after setup slot 0 holds the non-zero upgrader, so `init()` is callable **again** → authorize our contract for the deposit address; brute-force the Safe salt nonce (**= 13**) to land the proxy on `USER_DEPOSIT_ADDRESS`; `drop()` deploys it + pays the reward; drain the 20M DVT with the user's **off-chain** Safe signature (user sends no tx); forward the reward to the ward — all in the attacker's constructor, the player's **single** transaction |
+| 17 | Curvy Puppet | SC03/SC08 | ✅ `read-only-reentrancy`: the lender prices the LP as `oracle(ETH)·get_virtual_price()`, which is **unguarded** during `remove_liquidity` (LP burned + ETH sent before stETH) → flash-loan 80k ETH + 220k stETH (Aave), balloon the Curve stETH/ETH pool, then in the ETH callback **vp spikes to ~4.3×** so all 3 positions are underwater → liquidate all three in one reentrant sweep; same-asset repay, treasury's 200 WETH buffer absorbs premiums + Curve fee. **Live mainnet fork @ 20190356** |
 
-## Gaps surfaced (catalog to-do)
+## Gaps surfaced → catalog to-do
 
-Consistent with the Ethernaut findings, a few solves needed general techniques the catalog doesn't yet
-encode as detectors: **meta-transaction `_msgSender()` spoofing** (Naive Receiver), **claim/loop
-accounting desync** (The Rewarder — adjacent to `incorrect-reward-accounting`), **calldata smuggling**
-(ABI Smuggling — the Ethernaut Switch class), and **fractional/precision rounding** (Shards). These are
-candidate new entries.
+Several solves needed general techniques the catalog doesn't yet encode as detectors — candidate new
+entries (these are the actionable output for improving Aegis):
 
-## The remaining 4 (intricate puzzle-mechanics)
+- **Meta-transaction `_msgSender()` spoofing** (Naive Receiver) — forwarder/relayer trust.
+- **Claim/loop accounting desync** (The Rewarder) — adjacent to `incorrect-reward-accounting`.
+- **Calldata / ABI smuggling** (ABI Smuggling; Ethernaut Switch/HigherOrder) — selector-offset checks.
+- **Fractional / precision rounding asymmetry** (Shards) — paired fill/refund math.
+- **Inverted / missing sender authorization on bridge message execution** (Withdrawal).
+- **Flash-loan re-deposit / same-asset accounting** (Side Entrance), **forced-ether / DoS** (from Ethernaut).
 
-These don't add catalog-detector coverage — they're CTF puzzles:
-- **Shards** (SC07 precision): the cost/refund rounding asymmetry is identified; landing it needs the
-  exact free-fill (`want` small enough that the cost rounds to 0, player holds 0 DVT) repeated to clear
-  the threshold.
-- **Wallet Mining**: brute-force a create2 salt so a Safe deploys at a pre-funded address + an
-  upgradeable authorizer storage quirk.
-- **Withdrawal**: as the granted operator (who bypasses the merkle proof), front-run the malicious
-  withdrawal and restore the bridge balance within the delay window.
-- **Curvy Puppet**: read-only reentrancy on Curve's `get_virtual_price` against a mainnet fork — the
-  same class as our [`read-only-reentrancy`](exploits/read-only-reentrancy.md) entry, but heavy setup.
+## The two hardest, in detail
+
+- **Wallet Mining (single-tx constraint).** `_isSolved` requires `vm.getNonce(player) == 1`, so the
+  whole exploit must fit in **one** player transaction — we do it inside an attacker contract's
+  constructor (the deploy *is* the one tx). The bug is a storage-slot collision: `AuthorizerUpgradeable`
+  keeps `needsInit` at slot 0, but it runs behind a `TransparentProxy` whose own `upgrader` is **also**
+  slot 0. `setUpgrader(upgrader)` therefore leaves slot 0 non-zero, so `needsInit != 0` and `init()` can
+  be replayed — we re-authorize our attacker for the deposit address. We then brute-force the Safe
+  `saltNonce` (**13**) so `createProxyWithNonce` lands the proxy exactly on the pre-funded
+  `USER_DEPOSIT_ADDRESS`, call `drop()` to deploy it and collect the reward, and sweep the 20M DVT using
+  the user's **off-chain** EIP-712 Safe signature (the user never transacts). Solution:
+  [`dvd/solutions/test/wallet-mining/`](https://github.com/novaondesk/aegis/tree/main/dvd/solutions/test/wallet-mining).
+- **Curvy Puppet (read-only reentrancy over a live fork).** Same class as our
+  [`read-only-reentrancy`](exploits/read-only-reentrancy.md) detector (also validated by Ethernaut #10 /
+  `cei-reentrancy`). The lender prices the borrow asset (Curve stETH/ETH LP) as
+  `oracle(ETH) · curvePool.get_virtual_price()`, and `get_virtual_price()` is **not** behind the pool's
+  reentrancy lock. `remove_liquidity` burns the LP and pays out ETH (coin 0) *before* stETH (coin 1), so
+  mid-callback the invariant `D` is taken over a still-full stETH balance against an already-reduced
+  supply → the virtual price spikes. We flash-loan **80k ETH + 220k stETH from Aave**, balloon the pool,
+  and in the ETH callback (vp ≈ **4.3×**, measured empirically against the fork) every position is
+  underwater — we liquidate all three in one sweep. Funds are repaid same-asset (wstETH unwrap/wrap +
+  Lido `submit` to true up the stETH leg); the treasury's 200 WETH buffer absorbs the Aave premiums and
+  the small Curve fee. Runs on a **mainnet fork @ block 20190356**. Solution:
+  [`dvd/solutions/test/curvy-puppet/`](https://github.com/novaondesk/aegis/tree/main/dvd/solutions/test/curvy-puppet).
 
 ## Reproduce
 
@@ -77,11 +96,10 @@ These don't add catalog-detector coverage — they're CTF puzzles:
 git clone https://github.com/theredguild/damn-vulnerable-defi
 cd damn-vulnerable-defi && git submodule update --init --recursive
 cp -r /path/to/aegis/dvd/solutions/test/* test/
-# Puppet V3 needs an archive RPC:
-export MAINNET_FORKING_URL=<archive-rpc>
+export MAINNET_FORKING_URL=<archive-rpc>   # Puppet V3
 forge test
 ```
 
-Solved test files (our `test_*` filled in, DVD's `setUp`/`_isSolved` unchanged) are in
+Solved test files (our `test_*` filled in; DVD's `setUp`/`_isSolved` untouched) are in
 [`dvd/solutions/`](https://github.com/novaondesk/aegis/tree/main/dvd/solutions). Level contracts are
 DVD's (MIT, github.com/theredguild/damn-vulnerable-defi).
