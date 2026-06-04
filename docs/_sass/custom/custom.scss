@@ -1,0 +1,138 @@
+// Aegis custom styles — imported last by just-the-docs. Modern polish + syntax palette.
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap");
+
+// --- layout polish ---
+.side-bar {
+  border-right: 1px solid $border-color;
+  background: linear-gradient(180deg, #0a0c14 0%, #090b12 100%);
+}
+.main {
+  background: radial-gradient(1200px 480px at 80% -10%, rgba(108, 92, 255, 0.06), transparent 60%);
+}
+.main-content {
+  h1,
+  h2,
+  h3 {
+    letter-spacing: -0.012em;
+  }
+  h2 {
+    padding-top: 0.4rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.04);
+  }
+}
+
+// --- hero (home) ---
+.fs-9 {
+  background: linear-gradient(92deg, #8aa0ff 0%, #b694ff 45%, #6c5cff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+
+// --- buttons ---
+.btn {
+  border-radius: 9px;
+  font-weight: 500;
+  transition: transform 0.08s ease, box-shadow 0.15s ease;
+}
+.btn:hover {
+  transform: translateY(-1px);
+}
+.btn-primary {
+  background-image: linear-gradient(135deg, #6c5cff, #9a6cff);
+  border: 0;
+  box-shadow: 0 6px 18px rgba(108, 92, 255, 0.35);
+}
+.btn-primary:hover {
+  background-image: linear-gradient(135deg, #7d6dff, #a87dff);
+}
+
+// --- links ---
+.main-content a {
+  text-decoration: none;
+  border-bottom: 1px solid rgba(138, 160, 255, 0.25);
+}
+.main-content a:hover {
+  border-bottom-color: #8aa0ff;
+}
+
+// --- inline code ---
+code.language-plaintext,
+.main-content li > code,
+.main-content p > code,
+.main-content td > code {
+  color: #c8b6ff;
+  background-color: rgba(154, 108, 255, 0.1);
+  border: 1px solid rgba(154, 108, 255, 0.18);
+  border-radius: 6px;
+  padding: 0.12em 0.4em;
+}
+
+// --- code blocks ---
+div.highlighter-rouge,
+figure.highlight {
+  border: 1px solid $border-color;
+  border-radius: 12px;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.03) inset;
+}
+.highlight {
+  background-color: #0d1117;
+  border-radius: 12px;
+}
+
+// --- tables ---
+.main-content table {
+  border: 1px solid $border-color;
+  border-radius: 12px;
+  border-collapse: separate;
+  border-spacing: 0;
+  overflow: hidden;
+}
+.main-content th {
+  background-color: #121826;
+  color: #e7ecf5;
+}
+.main-content th,
+.main-content td {
+  border-color: $border-color;
+}
+.main-content tbody tr:hover {
+  background-color: rgba(138, 160, 255, 0.04);
+}
+
+// --- callouts / labels ---
+.label,
+.nav-list .nav-list-item .nav-list-link.active {
+  font-weight: 600;
+}
+
+// --- search ---
+.search-input {
+  border-radius: 9px;
+}
+
+// --- syntax highlighting (GitHub-dark, fixes the old/garish colors) ---
+.highlight {
+  color: #c9d1d9;
+  .c, .c1, .cm, .cs, .cd { color: #8b949e; font-style: italic; }
+  .k, .kd, .kn, .kp, .kr, .kv { color: #ff7b72; }
+  .kt { color: #ffa657; }
+  .o, .ow { color: #ff7b72; }
+  .p, .pi { color: #c9d1d9; }
+  .s, .s1, .s2, .se, .sb, .sc, .sd, .sh, .sx, .dl { color: #a5d6ff; }
+  .mi, .mf, .mh, .mo, .il, .m { color: #79c0ff; }
+  .n, .nl, .py { color: #c9d1d9; }
+  .na { color: #79c0ff; }
+  .nb, .bp { color: #79c0ff; }
+  .nc, .nn, .no { color: #ffa657; }
+  .nf, .fm { color: #d2a8ff; }
+  .nt { color: #7ee787; }
+  .nv, .vi, .vg, .vc { color: #ffa657; }
+  .nd, .ni { color: #d2a8ff; }
+  .err { color: #ffa198; background: transparent; }
+  .gd { color: #ffa198; background-color: rgba(248, 81, 73, 0.12); }
+  .gi { color: #7ee787; background-color: rgba(63, 185, 80, 0.12); }
+  .gh { color: #79c0ff; font-weight: 600; }
+}

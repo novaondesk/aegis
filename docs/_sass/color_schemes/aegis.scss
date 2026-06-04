@@ -1,0 +1,28 @@
+// Aegis custom color scheme (modern dark). Set `color_scheme: aegis` in _config.yml.
+// Variables phase — fonts + the semantic palette just-the-docs reads.
+
+$body-font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
+  sans-serif;
+$mono-font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+$root-font-size: 16px;
+$body-line-height: 1.65;
+
+// surfaces
+$body-background-color: #0b0e16;
+$sidebar-color: #090b12;
+$search-background-color: #090b12;
+$table-background-color: #0e1320;
+$code-background-color: #0d1117;
+$feedback-color: #090b12;
+$border-color: #1d2435;
+
+// text
+$body-text-color: #c3ccda;
+$body-heading-color: #f3f6fb;
+$nav-child-link-color: #8b94a6;
+$search-result-preview-color: #7b8497;
+
+// accent
+$link-color: #8aa0ff;
+$btn-primary-color: #6c5cff;
+$base-button-color: #141a26;

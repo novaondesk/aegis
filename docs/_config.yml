@@ -6,7 +6,7 @@ plugins:
   - jekyll-include-cache
 
 # just-the-docs options
-color_scheme: dark
+color_scheme: aegis
 search_enabled: true
 heading_anchors: true
 aux_links:
