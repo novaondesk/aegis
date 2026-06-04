@@ -41,7 +41,7 @@ contract ERC20 is IERC20 {
         return _allowances[owner][spender];
     }
 
-    function transfer(address to, uint256 amount) public override returns (bool) {
+    function transfer(address to, uint256 amount) public virtual override returns (bool) {
         _transfer(msg.sender, to, amount);
         return true;
     }
