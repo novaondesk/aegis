@@ -13,7 +13,6 @@ the next moves*, written 2026-06-04.
   AEGIS_PROMOTE=1 git commit -m "..."
   AEGIS_PUSH=1 git push origin main
   ```
-- Use the project's existing commit identity; don't add an AI co-author trailer.
 - **No claimed finding without a runnable PoC.** A solve isn't done until `forge test` is green.
 - **Push after every commit** (the human collaborates via the remote).
 - Small, focused commits; explain *why* in the body.
