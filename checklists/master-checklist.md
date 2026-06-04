@@ -30,6 +30,7 @@ Legend: 🤖 = an automated tool/rule can flag candidates · 👁 = needs human 
       Roots/Stalk/voting-power from current storage vs a snapshot block.
       *Beanstalk: $181M — flash-loaned $1B in LP → deposited for Roots → supermajority
       vote → emergency commit → drain, all in one tx.*
+      **semgrep:** `governance-voting-power-no-snapshot` (tools/semgrep/governance-snapshot.yaml)
 - [ ] 👁 **SC02-GOV-2:** Is there a **minimum delay** between proposal submission and
       execution that exceeds the time needed for tokenholders to detect and react (e.g.,
       7 days, not 1 day)? Can the delay be bypassed via `emergencyCommit` or fast-track?
@@ -54,6 +55,7 @@ Legend: 🤖 = an automated tool/rule can flag candidates · 👁 = needs human 
       Check for `public` visibility on setter functions for `mapping(address => bool)`
       patterns. *TrustedVolumes: $6.7M — `setAuthorizedSigner` was public with no modifier,
       attacker added self to whitelist, forged trade orders.*
+      **semgrep:** `public-setter-without-access-control` (tools/semgrep/public-setter.yaml)
 - [ ] **SC02-BRIDGE:** For bridge contracts: Is cross-chain message verification based on
       a well-audited Merkle library (e.g., OpenZeppelin MerpleProof)? Are roots validated
       against signed validator attestations, not just computed values? Is there a fallback
