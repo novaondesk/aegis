@@ -29,7 +29,9 @@ challenge → SWEEP the catalog → PROVE by filling in the challenge's `test_*`
 | 17 | Curvy Puppet | oracle (Curve) | ⏳ |
 | 18 | Withdrawal | `verus-bridge-merkle-forgery` | ⏳ |
 
-(14 / 18 so far — work in progress.)
+**14 / 18 solved** — every challenge that exercises a catalog detector class. The remaining 4 are
+intricate puzzle-mechanics (precision rounding, create2 mining, an L2→L1 bridge race, a Curve fork).
+Full write-up: [`../docs/dvd-wargame.md`](../docs/dvd-wargame.md).
 
 ## How to run
 

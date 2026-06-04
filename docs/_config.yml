@@ -20,3 +20,4 @@ exclude:
   - research-plans/
   - vuln-classes/
   - ethernaut-wargame.md
+  - dvd-wargame.md
