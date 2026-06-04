@@ -19,7 +19,7 @@ challenge → SWEEP the catalog → PROVE by filling in the challenge's `test_*`
 | 7 | Compromised | info-exposure → oracle manipulation | ✅ |
 | 8 | Puppet | **`mango-oracle-manipulation` / `loopscale-oracle-spot-price`** | ✅ |
 | 9 | Puppet V2 | **oracle spot-price manipulation** | ✅ |
-| 10 | Puppet V3 | oracle (TWAP) | ⏳ |
+| 10 | Puppet V3 | **oracle (V3 TWAP) manipulation** (mainnet fork) | ✅ |
 | 11 | Free Rider | **SC02 logic** (pay-the-buyer + total msg.value) | ✅ |
 | 12 | Backdoor | **SC01 init-delegatecall backdoor** (Safe setup) | ✅ |
 | 13 | Climber | **`proxy-storage-collision`/upgrade** (timelock CEI) | ✅ |
@@ -29,7 +29,7 @@ challenge → SWEEP the catalog → PROVE by filling in the challenge's `test_*`
 | 17 | Curvy Puppet | oracle (Curve) | ⏳ |
 | 18 | Withdrawal | `verus-bridge-merkle-forgery` | ⏳ |
 
-(13 / 18 so far — work in progress.)
+(14 / 18 so far — work in progress.)
 
 ## How to run
 
