@@ -3,6 +3,27 @@
 All notable changes to Aegis are documented here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/); versions follow [SemVer](https://semver.org/).
 
+## [2.4.0] — 2026-06-04
+
+DVD v4 18/18 + 4 wargame-mined detectors.
+
+### Added
+- **Damn Vulnerable DeFi v4 → 18/18** (was 16/18). Solved the last two in the real harness:
+  **Wallet Mining** (slot-0 `needsInit`/`upgrader` storage-collision re-`init`, Safe `saltNonce=13`
+  create2 onto the deposit address, off-chain Safe-sig drain — all in the player's single tx) and
+  **Curvy Puppet** (Curve `get_virtual_price` read-only-reentrancy liquidation on a mainnet fork @
+  20190356: flash-loan 80k ETH + 220k stETH, inflate vp ~4.3× in the `remove_liquidity` ETH callback,
+  liquidate all 3 positions in one reentrant sweep). Solutions in `dvd/solutions/test/`.
+- **4 new catalog detectors** mined from the wargames (catalog 27 → 31 coded; +11 PoC tests, all green):
+  `meta-tx-msgsender-spoof` (SC01, DVD Naive Receiver), `calldata-abi-smuggling` (SC05/SC01, DVD ABI
+  Smuggling + Ethernaut Switch/HigherOrder), `forced-ether-balance-assumption` (SC02, Ethernaut
+  Force/King), `dos-griefing-revert` (SC10/SC02, Ethernaut King/Denial). Each: case study +
+  catalog entry + `Vulnerable<X>`/`Safe<X>`/test + checklist item + semgrep rule.
+
+### Changed
+- Docs site: `the-catalog` 27 → 31 detectors, `pocs` +4 blocks, both wargame reports' gap lists
+  updated to link the promoted detectors.
+
 ## [2.3.0] — 2026-06-03
 
 Full Ethernaut wargame coverage.

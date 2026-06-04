@@ -139,3 +139,63 @@ rules:
             ...
           }
 
+  # ---------------------------------------------------------------------------
+  # Wargame-mined detectors (DVD v4 + Ethernaut), 2026-06-04. Seed rules.
+  # ---------------------------------------------------------------------------
+  - id: unauthenticated-meta-tx-sender
+    languages: [solidity]
+    severity: WARNING
+    message: >-
+      A forwarder appends a caller-supplied address to the forwarded calldata (ERC-2771
+      `_msgSender()` source). If the appended `from` is not authenticated with an EIP-712
+      signature + nonce, every downstream `_msgSender()` auth check is spoofable — an attacker
+      acts as any victim. Checklist SC01. cf. DVD Naive Receiver. catalog: meta-tx-msgsender-spoof.
+    pattern-either:
+      - pattern: $T.call(abi.encodePacked($DATA, $FROM))
+      - pattern: $T.call(abi.encodePacked($DATA, $FROM, ...))
+    metadata:
+      owasp-sc: [SC01]
+      exploit-id: meta-tx-msgsender-spoof
+
+  - id: selector-check-fixed-offset
+    languages: [solidity]
+    severity: WARNING
+    message: >-
+      A selector/role allow-list reads the guarded selector from a hard-coded calldata offset
+      while a separate dynamic `bytes` buffer is forwarded. ABI offsets are attacker-controlled,
+      so the validated bytes and the executed bytes can differ (ABI smuggling). Validate
+      `actionData[:4]`, the bytes you actually dispatch. Checklist SC05. catalog: calldata-abi-smuggling.
+    pattern-regex: '\b\w+\s*:=\s*calldataload\(0x[0-9a-fA-F]+\)'
+    metadata:
+      owasp-sc: [SC05, SC01]
+      exploit-id: calldata-abi-smuggling
+
+  - id: balance-equality-control-flow
+    languages: [solidity]
+    severity: WARNING
+    message: >-
+      Control flow gated on the raw contract balance. `selfdestruct`/coinbase/pre-funding can force
+      the balance, so a strict `==` (or threshold) check can be bricked or triggered early. Gate on
+      internal accounting and use `>=`. Checklist SC02/DoS. catalog: forced-ether-balance-assumption.
+    pattern-either:
+      - pattern: require(address(this).balance == $X, ...)
+      - pattern: require(address(this).balance == $X)
+      - pattern: if (address(this).balance == $X) { ... }
+    metadata:
+      owasp-sc: [SC02]
+      exploit-id: forced-ether-balance-assumption
+
+  - id: mandatory-push-payment
+    languages: [solidity]
+    severity: INFO
+    message: >-
+      A pushed value transfer to a stored/caller-chosen address is required to succeed. A recipient
+      with a reverting `receive` can then veto the whole path (DoS griefing). Prefer pull payments
+      and isolate per-recipient failure. Checklist SC10/DoS. catalog: dos-griefing-revert.
+    pattern: |
+      ($OK, $_) = $DST.call{value: $V}($ARG);
+      require($OK, ...);
+    metadata:
+      owasp-sc: [SC10, SC02]
+      exploit-id: dos-griefing-revert
+

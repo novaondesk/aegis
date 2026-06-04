@@ -138,9 +138,10 @@ detector → log.
 ## Status — v2.1.0
 
 See [`CHANGELOG.md`](CHANGELOG.md) and [`research-log/`](research-log/).
-- **Catalog:** 27 exploit detectors (25 with runnable model PoCs, 2 studied), machine-readable +
+- **Catalog:** 31 exploit detectors (29 with runnable model PoCs, 2 studied), machine-readable +
   agent-driven. v2.0.0 added 11 DeFiHackLabs-mined classes; v2.1.0 added Nova's 5 May-2026 studies
-  (3 coded) and the fork-simulation capability.
+  (3 coded) and the fork-simulation capability; v2.4.0 added 4 wargame-mined classes (meta-tx spoof,
+  ABI smuggling, forced-ether, DoS-griefing).
 - **Fork-simulation (`sim/`):** prove findings against *real deployed targets* on a forked chain.
   4 real incident replays pass against mainnet state — Socket Gateway (approval drain, ~656k USDC),
   Audius (proxy storage collision, ~18.56M AUDIO), DAO Maker (unprotected init, 5.76M DERC), and

@@ -39,7 +39,7 @@ Every entry is a detector with these fields:
 | `poc` / `poc_cmd` | runnable proof + how to run it |
 | `fork_poc` | (optional) a real mainnet-fork replay |
 
-## All 27 detectors
+## All 31 detectors
 
 | # | Detector (`id`) | Class | Chains | Status |
 |---|---|---|---|---|
@@ -70,6 +70,14 @@ Every entry is a detector with these fields:
 | 25 | [`bridge-deposit-no-code-token`](pocs#bridge-deposit-no-code-token) | SC02 | evm | coded |
 | 26 | [`first-deposit-amm-skim`](pocs#first-deposit-amm-skim) | SC07 | evm | coded |
 | 27 | [`cei-reentrancy`](pocs#cei-reentrancy) | SC08 | evm | coded |
+| 28 | [`meta-tx-msgsender-spoof`](pocs#meta-tx-msgsender-spoof) | SC01 | evm | coded |
+| 29 | [`calldata-abi-smuggling`](pocs#calldata-abi-smuggling) | SC05/SC01 | evm | coded |
+| 30 | [`forced-ether-balance-assumption`](pocs#forced-ether-balance-assumption) | SC02 | evm | coded |
+| 31 | [`dos-griefing-revert`](pocs#dos-griefing-revert) | SC10/SC02 | evm | coded |
 
+> The last four were mined from the **wargames** (DVD v4 Naive Receiver / ABI Smuggling, Ethernaut
+> Force/King/Denial/Switch) — exactly the loop working as intended: a level solved by a general
+> technique becomes a catalog detector.
+>
 > See **[PoCs](pocs)** for what each detector catches and its runnable proof. *(EVM model)* entries
 > reproduce a non-EVM incident's broken invariant in Solidity so it runs in the Foundry harness.

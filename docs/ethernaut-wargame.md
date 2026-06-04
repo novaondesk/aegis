@@ -74,19 +74,23 @@ Ten levels are caught by an exact catalog entry — the same detectors that fire
 ## Gaps the wargame surfaced (the to-do list)
 
 The levels solved with general techniques are exactly the detector classes the catalog should grow
-into. Each is a candidate new entry:
+into. Three more were just promoted to detectors this round:
 
-- **Denial-of-service** — King, Denial (reverting recipient / gas-griefing). *No SC10/DoS detector yet.*
-- **Forced ether** — Force (`selfdestruct` balance assumptions).
-- **Information exposure** — Vault, Privacy (`private` ≠ secret).
+- ✅ **Denial-of-service** — King, Denial (reverting recipient / gas-griefing) → now
+  [`dos-griefing-revert`](pocs#dos-griefing-revert).
+- ✅ **Forced ether** — Force/King (`selfdestruct` balance assumptions) → now
+  [`forced-ether-balance-assumption`](pocs#forced-ether-balance-assumption).
+- ✅ **Calldata / ABI manipulation** — Switch, HigherOrder → now
+  [`calldata-abi-smuggling`](pocs#calldata-abi-smuggling).
+- **Information exposure** — Vault, Privacy (`private` ≠ secret). *(to-do)*
 - **Integer / storage underflow** — Token, AlienCodex (a pre-0.8 / `unchecked` class; the catalog's
-  only overflow entry is the Move `cetus-amm-overflow`).
-- **`tx.origin` authentication** — Telephone, Gatekeepers.
-- **Calldata / ABI manipulation** — Switch, HigherOrder.
-- **Untrusted-interface assumptions** — Elevator, Shop.
+  only overflow entry is the Move `cetus-amm-overflow`). *(to-do)*
+- **`tx.origin` authentication** — Telephone, Gatekeepers. *(to-do)*
+- **Untrusted-interface assumptions** — Elevator, Shop. *(to-do)*
 
-> This is the loop working as intended — the Reentrance level already prompted adding the exact
-> [`cei-reentrancy`](pocs#cei-reentrancy) detector. The classes above are tracked follow-ups.
+> This is the loop working as intended — the Reentrance level prompted [`cei-reentrancy`](pocs#cei-reentrancy),
+> and Force/King/Denial/Switch just produced three more detectors. The remaining classes are tracked
+> follow-ups.
 
 ## Reproduce
 

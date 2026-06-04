@@ -444,3 +444,67 @@ cd poc && forge test --match-contract CeiReentrancy -vv
 [PoC test](https://github.com/novaondesk/aegis/blob/main/poc/test/CeiReentrancy.t.sol) · [case study](https://github.com/novaondesk/aegis/blob/main/docs/exploits/cei-reentrancy.md) · [fork replay](https://github.com/novaondesk/aegis/blob/main/ethernaut/test/Reentrance.t.sol)
 
 ---
+
+## meta-tx-msgsender-spoof
+{: #meta-tx-msgsender-spoof }
+
+**Class** SC01 · **Chains** evm · **Status** `coded`
+
+A target derives the logical caller from forwarder-appended calldata (ERC-2771 `_msgSender()` reads the trailing 20 bytes). A forwarder that relays an arbitrary `from` without an EIP-712 signature + nonce from `from` lets an attacker act as any victim, bypassing every `_msgSender()`-based authorization. Surfaced by DVD v4 Naive Receiver. Fix: restrict the forwarder set and verify a signed, nonced request.
+
+**Invariant:** no forwarder call can change balances[X]/privileges of X unless X signed the request (or is msg.sender)
+
+```
+cd poc && forge test --match-contract MetaTxMsgSenderSpoof -vv
+```
+[PoC test](https://github.com/novaondesk/aegis/blob/main/poc/test/MetaTxMsgSenderSpoof.t.sol) · [case study](https://github.com/novaondesk/aegis/blob/main/docs/exploits/meta-tx-msgsender-spoof.md)
+
+---
+
+## calldata-abi-smuggling
+{: #calldata-abi-smuggling }
+
+**Class** SC05/SC01 · **Chains** evm · **Status** `coded`
+
+A gatekeeper reads the guarded selector from a fixed calldata offset (assuming canonical ABI encoding) but forwards a dynamic `bytes` param whose offset the attacker controls — so an allowed selector passes the check while `sweepFunds` actually runs. DVD v4 ABI Smuggling; Ethernaut Switch/HigherOrder. Fix: validate the selector of the exact bytes you dispatch (`actionData[:4]`).
+
+**Invariant:** the function authorized by the guard == the function executed, for every crafted calldata layout
+
+```
+cd poc && forge test --match-contract CalldataAbiSmuggling -vv
+```
+[PoC test](https://github.com/novaondesk/aegis/blob/main/poc/test/CalldataAbiSmuggling.t.sol) · [case study](https://github.com/novaondesk/aegis/blob/main/docs/exploits/calldata-abi-smuggling.md)
+
+---
+
+## forced-ether-balance-assumption
+{: #forced-ether-balance-assumption }
+
+**Class** SC02 · **Chains** evm · **Status** `coded`
+
+Logic that treats `address(this).balance` as if it changes only through its own payable entrypoints is wrong: `selfdestruct(target)` forces ETH into any account, and counterfactual addresses can be pre-funded. A strict-equality or threshold check on the raw balance can be bricked (DoS) or triggered early by one forced wei. Ethernaut Force/King. Fix: gate on internal accounting, use `>=`, sweep surplus.
+
+**Invariant:** control flow depends only on values the contract authoritatively tracks; forced ether cannot change reachability
+
+```
+cd poc && forge test --match-contract ForcedEtherBalanceAssumption -vv
+```
+[PoC test](https://github.com/novaondesk/aegis/blob/main/poc/test/ForcedEtherBalanceAssumption.t.sol) · [case study](https://github.com/novaondesk/aegis/blob/main/docs/exploits/forced-ether-balance-assumption.md)
+
+---
+
+## dos-griefing-revert
+{: #dos-griefing-revert }
+
+**Class** SC10/SC02 · **Chains** evm · **Status** `coded`
+
+A flow that pushes ETH/tokens to an externally chosen address and requires the send to succeed hands that recipient a veto: a contract with a reverting `receive` freezes the whole path for everyone (also: unbounded loops over a user-growable list). Ethernaut King/Denial. Fix: pull-payment ledger + per-recipient failure isolation; bound or chunk loops.
+
+**Invariant:** one participant's failure (revert / gas / list size) cannot block another participant's progress
+
+```
+cd poc && forge test --match-contract DosGriefingRevert -vv
+```
+[PoC test](https://github.com/novaondesk/aegis/blob/main/poc/test/DosGriefingRevert.t.sol) · [case study](https://github.com/novaondesk/aegis/blob/main/docs/exploits/dos-griefing-revert.md)
+
+---

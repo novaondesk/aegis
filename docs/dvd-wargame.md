@@ -55,15 +55,16 @@ Puppet V3 and Curvy Puppet run over a **live mainnet fork** (real Curve/Lido/Aav
 
 ## Gaps surfaced → catalog to-do
 
-Several solves needed general techniques the catalog doesn't yet encode as detectors — candidate new
-entries (these are the actionable output for improving Aegis):
+Several solves needed general techniques the catalog didn't yet encode as detectors. The strongest
+ones were promoted to catalog entries this round (✅):
 
-- **Meta-transaction `_msgSender()` spoofing** (Naive Receiver) — forwarder/relayer trust.
-- **Claim/loop accounting desync** (The Rewarder) — adjacent to `incorrect-reward-accounting`.
-- **Calldata / ABI smuggling** (ABI Smuggling; Ethernaut Switch/HigherOrder) — selector-offset checks.
-- **Fractional / precision rounding asymmetry** (Shards) — paired fill/refund math.
-- **Inverted / missing sender authorization on bridge message execution** (Withdrawal).
-- **Flash-loan re-deposit / same-asset accounting** (Side Entrance), **forced-ether / DoS** (from Ethernaut).
+- ✅ **Meta-transaction `_msgSender()` spoofing** (Naive Receiver) → [`meta-tx-msgsender-spoof`](pocs#meta-tx-msgsender-spoof).
+- ✅ **Calldata / ABI smuggling** (ABI Smuggling; Ethernaut Switch/HigherOrder) → [`calldata-abi-smuggling`](pocs#calldata-abi-smuggling).
+- ✅ **Forced-ether / DoS** (from Ethernaut Force/King/Denial) → [`forced-ether-balance-assumption`](pocs#forced-ether-balance-assumption) + [`dos-griefing-revert`](pocs#dos-griefing-revert).
+- **Claim/loop accounting desync** (The Rewarder) — covered by the adjacent [`incorrect-reward-accounting`](pocs#incorrect-reward-accounting) detector.
+- **Fractional / precision rounding asymmetry** (Shards) — paired fill/refund math. *(to-do: a generic precision-asymmetry detector)*
+- **Inverted / missing sender authorization on bridge message execution** (Withdrawal) — folded into [`verus-bridge-merkle-forgery`](pocs#verus-bridge-merkle-forgery)'s family.
+- **Flash-loan re-deposit / same-asset accounting** (Side Entrance). *(to-do)*
 
 ## The two hardest, in detail
 

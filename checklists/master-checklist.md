@@ -119,6 +119,10 @@ Legend: 🤖 = an automated tool/rule can flag candidates · 👁 = needs human 
       *Rubixy: constructor naming error left ownership transfer public.*
 - [ ] `tx.origin` used for auth anywhere? (phishing vector)
 - [ ] Can role admin be transferred to address(0) or self-renounced into a brick?
+- [ ] **Meta-tx / forwarder trust:** is any auth derived from `_msgSender()`/trailing-calldata
+      sender? If so, is the trusted-forwarder set restricted **and** does each forwarder verify an
+      EIP-712 sig + nonce from the appended `from`? A permissionless or signature-less forwarder lets
+      anyone act as anyone. `meta-tx-msgsender-spoof` — DVD Naive Receiver.
 
 ## SC08 — Reentrancy 🤖👁
 - [ ] Checks-Effects-Interactions on every external-call function? State updated
@@ -150,6 +154,10 @@ Legend: 🤖 = an automated tool/rule can flag candidates · 👁 = needs human 
 - [ ] Array length / bounds; deadline & slippage params present and enforced?
 - [ ] **Cross-chain message** payloads validated for source chain + sender + nonce?
       *Kelp rsETH: cross-chain verification config failure, $292M (config layer).*
+- [ ] **ABI / calldata smuggling:** does any selector/role allow-list read the guarded selector from
+      a *fixed* `calldataload` offset (or `msg.data[k:k+4]`) and then forward a separate dynamic
+      `bytes` buffer? The validated bytes must be the executed bytes (`actionData[:4]`); ABI offsets
+      are attacker-controlled. `calldata-abi-smuggling` — DVD ABI Smuggling, Ethernaut Switch/HigherOrder.
 
 ## SC10 — Proxy & Upgradeability 🤖
 - [ ] Storage layout collision between impl versions? Gap variables present?
@@ -163,9 +171,14 @@ Legend: 🤖 = an automated tool/rule can flag candidates · 👁 = needs human 
 
 ## DoS / griefing 👁
 - [ ] Unbounded loops over user-growable arrays? Push-payment that one revert can brick?
-      (use pull-payments)
+      (use pull-payments) `dos-griefing-revert` — Ethernaut King/Denial. A mandatory push to an
+      externally-chosen address (`require(ok)` after `call{value:}`/`transfer`) hands that recipient a
+      veto; isolate per-recipient failure.
 - [ ] Can an attacker force a critical function to always revert (e.g. by donating dust,
       or being the recipient of a forced transfer)?
+- [ ] **Forced-ether assumption:** any logic gating on `address(this).balance`/`balanceOf(this)` with
+      `==` or a threshold? `selfdestruct`/pre-funding forces the balance — use internal accounting and
+      `>=`. `forced-ether-balance-assumption` — Ethernaut Force.
 
 ## Weak randomness 🤖
 - [ ] `block.timestamp`/`blockhash`/`prevrandao` used for anything valuable? (use VRF)
