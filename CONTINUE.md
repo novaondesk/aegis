@@ -6,15 +6,14 @@ places every studied exploit must update, the hard rules). This file is the *cur
 the next moves*, written 2026-06-04.
 
 ## Ground rules you must follow
-- **Commit identity:** `git -c user.name=novaondesk -c user.email=novaondesk@users.noreply.github.com commit`.
-  **Never** add a Claude/AI co-author trailer.
 - **Push guardrail:** a pre-commit hook confines plain commits to `intake/` + `research-log/`. To
   commit reviewed/proven work to canonical dirs (`catalog/`, `poc/`, `docs/`, `ethernaut/`, `dvd/`),
   prefix the commit with `AEGIS_PROMOTE=1` and push with `AEGIS_PUSH=1`:
   ```bash
-  AEGIS_PROMOTE=1 git -c user.name=novaondesk -c user.email=novaondesk@users.noreply.github.com commit -m "..."
+  AEGIS_PROMOTE=1 git commit -m "..."
   AEGIS_PUSH=1 git push origin main
   ```
+- Use the project's existing commit identity; don't add an AI co-author trailer.
 - **No claimed finding without a runnable PoC.** A solve isn't done until `forge test` is green.
 - **Push after every commit** (the human collaborates via the remote).
 - Small, focused commits; explain *why* in the body.
@@ -97,5 +96,5 @@ forge test` and `cd poc && forge test` are green; (2) the win condition asserted
 `validateInstance`; (3) any new catalog entry parses
 (`python3 -c "import yaml; yaml.safe_load(open('catalog/exploits.yaml'))"`) and follows the schema with
 checkable `applies_when` + a `root_cause` + `variant_queries`; (4) the four-places loop is complete
-(case study + catalog + checklist + detection artifact); (5) the right commit identity + push. Keep the
+(case study + catalog + checklist + detection artifact); (5) committed + pushed cleanly. Keep the
 exploit faithful to the real level (don't weaken `setUp`/`validateInstance`).
