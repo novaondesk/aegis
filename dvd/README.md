@@ -11,7 +11,7 @@ challenge → SWEEP the catalog → PROVE by filling in the challenge's `test_*`
 | # | Challenge | Catalog detector | Status |
 |---|-----------|------------------|--------|
 | 1 | Unstoppable | `erc4626-inflation` (donation → DoS) | ✅ |
-| 2 | Naive Receiver | — | ⏳ |
+| 2 | Naive Receiver | SC01 meta-tx `_msgSender` spoof | ✅ |
 | 3 | Truster | **`approval-drain-arbitrary-call`** | ✅ |
 | 4 | Side Entrance | SC02/SC04 flashloan re-deposit | ✅ |
 | 5 | The Rewarder | SC02 claim-accounting (repeat claim) | ✅ |
@@ -29,7 +29,7 @@ challenge → SWEEP the catalog → PROVE by filling in the challenge's `test_*`
 | 17 | Curvy Puppet | oracle (Curve) | ⏳ |
 | 18 | Withdrawal | `verus-bridge-merkle-forgery` | ⏳ |
 
-(9 / 18 so far — work in progress.)
+(10 / 18 so far — work in progress.)
 
 ## How to run
 
