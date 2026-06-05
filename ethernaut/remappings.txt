@@ -1,5 +1,4 @@
 forge-std/=../poc/lib/forge-std/src/
 openzeppelin-contracts-08/=src/vendor/oz/
-openzeppelin-contracts-06/=src/vendor/oz06/
 openzeppelin-contracts-v4.6.0/=src/vendor/oz/
 openzeppelin-contracts-v5.4.0/=src/vendor/oz/
