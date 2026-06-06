@@ -26,6 +26,9 @@ contract ImpersonatorTwoTest is Test {
     // secp256k1 group order
     uint256 constant N = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141;
 
+    // secp256k1 half-order for low-s canonicalization
+    uint256 constant HALF_N = 0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0;
+
     // Factory constants
     address constant OWNER = 0x03E2cf81BBE61D1fD1421aFF98e8605a5A9e953a;
     address constant ADMIN = 0xADa4aFfe581d1A31d7F75E1c5a3A98b2D4C40f68;
@@ -44,35 +47,54 @@ contract ImpersonatorTwoTest is Test {
     // Pre-computed private key (offline: k-reuse recovery)
     uint256 constant PRIVATE_KEY = 0x10a6891de55baf453d66c5faede86eabccf93f3d284540d205f24207670855cc;
 
+    function _canonicalize(bytes32 r, bytes32 s, uint8 v) internal pure returns (bytes32, bytes32, uint8) {
+        // Ensure low-s (ECDSA shim rejects high-s)
+        if (uint256(s) > HALF_N) {
+            return (r, bytes32(N - uint256(s)), v == 27 ? 28 : 27);
+        }
+        return (r, s, v);
+    }
+
     function test_solve_impersonator_two() public {
         // --- challenge setup: mirror the factory ---
         ImpersonatorTwo instance = new ImpersonatorTwo{value: 0.001 ether}();
         instance.transferOwnership(OWNER);
+        // Mirror factory initialization: switchLock("lock0") then setAdmin("admin1"+ADMIN),
+        // both signed by the owner with the SAME r (this is the vulnerability). 65-byte sigs.
+        bytes memory switchLockSig = abi.encodePacked(R, S1, uint8(27));
+        instance.switchLock(switchLockSig);
+        bytes memory setAdminSig = abi.encodePacked(R, S2, uint8(27));
+        instance.setAdmin(setAdminSig, ADMIN);
+        assertEq(instance.nonce(), 2, "nonce should be 2 after factory init");
+        assertEq(instance.admin(), ADMIN, "admin should be ADMIN after factory init");
 
         // --- verify pre-computed private key recovers owner ---
         address recovered = vm.addr(PRIVATE_KEY);
         assertEq(recovered, OWNER, "pre-computed private key matches owner");
 
         // --- forge signatures as the owner ---
-        // 1. setAdmin: make player admin
-        // message = "admin" + nonce.toString() + newAdmin
-        // current nonce = 2 (after factory's switchLock + setAdmin)
+        // 1. setAdmin: make player admin (nonce = 2)
         bytes32 msgAdmin = instance.hash_message(string(abi.encodePacked("admin2", address(this))));
         (uint8 vAdmin, bytes32 rAdmin, bytes32 sAdmin) = vm.sign(PRIVATE_KEY, msgAdmin);
-        bytes memory sigAdmin = abi.encodePacked(rAdmin, sAdmin, bytes32(uint256(vAdmin)));
+        (rAdmin, sAdmin, vAdmin) = _canonicalize(rAdmin, sAdmin, vAdmin);
+        bytes memory sigAdmin = abi.encodePacked(rAdmin, sAdmin, vAdmin);
         instance.setAdmin(sigAdmin, address(this));
         assertEq(instance.admin(), address(this), "player is now admin");
 
         // 2. switchLock: unlock (nonce = 3)
         bytes32 msgLock = instance.hash_message("lock3");
         (uint8 vLock, bytes32 rLock, bytes32 sLock) = vm.sign(PRIVATE_KEY, msgLock);
-        bytes memory sigLock = abi.encodePacked(rLock, sLock, bytes32(uint256(vLock)));
+        (rLock, sLock, vLock) = _canonicalize(rLock, sLock, vLock);
+        bytes memory sigLock = abi.encodePacked(rLock, sLock, vLock);
         instance.switchLock(sigLock);
 
-        // 3. withdraw: drain balance
+        // 3. withdraw: drain balance (player is admin, funds unlocked)
         instance.withdraw();
 
         // Win condition: instance.balance == 0
         assertEq(address(instance).balance, 0, "contract drained");
     }
+
+    // Allow this test contract (the "player"/admin) to receive the withdrawn ether.
+    receive() external payable {}
 }
