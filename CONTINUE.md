@@ -3,7 +3,7 @@
 You're picking up **Aegis** (exploit-catalog-driven smart-contract auditing). Read
 [`AGENTS.md`](AGENTS.md) first — it's the contract for how to contribute (the loop, the four
 places every studied exploit must update, the hard rules). This file is the *current state +
-the next moves*, written 2026-06-04.
+the next moves*, last updated 2026-06-06.
 
 ## Ground rules you must follow
 - **Push guardrail:** a pre-commit hook confines plain commits to `intake/` + `research-log/`. To
@@ -17,12 +17,35 @@ the next moves*, written 2026-06-04.
 - **Push after every commit** (the human collaborates via the remote).
 - Small, focused commits; explain *why* in the body.
 
+### Build / verify / commit / push — exact mechanics (read this, it's not obvious)
+- **forge**: `/Users/wren/.foundry/bin/forge` (v1.7.x). `poc/` builds natively. For an ethernaut level,
+  verify in isolation (skips the x86-only old levels — see build note):
+  ```bash
+  cd ethernaut && forge test --match-contract <X>Test -vv \
+    --skip 'src/vendor/oz06/*' Token Fallout HigherOrder Reentrance Motorbike AlienCodex Ownable-05
+  ```
+- **Commit identity** (per AGENTS.md — do NOT add a Claude/AI co-author trailer):
+  ```bash
+  AEGIS_PROMOTE=1 git -c user.name=novaondesk -c user.email=novaondesk@users.noreply.github.com commit -m "..."
+  ```
+  (No git hooks are actually installed in this clone, but keep `AEGIS_PROMOTE=1` for faithfulness.)
+- **Push** — `origin` is HTTPS to `github.com/novaoc/aegis`; auth uses the token in
+  `/Users/wren/nova/.nova_secrets` as `GITHUB_TOKEN_NOVAOC`:
+  ```bash
+  TOKEN=$(grep -E "^GITHUB_TOKEN_NOVAOC=" /Users/wren/nova/.nova_secrets | cut -d= -f2-)
+  AEGIS_PUSH=1 git push "https://x-access-token:${TOKEN}@github.com/novaoc/aegis.git" main
+  ```
+- A new level = vendor source verbatim from `OpenZeppelin/ethernaut` (`curl` the raw
+  `contracts/src/levels/<Name>.sol` + factory), add any missing shim under `src/vendor/oz/`, write the
+  test mirroring the factory's `createInstance`/`validateInstance`, then update README + the
+  `docs/ethernaut-wargame.md` count/row, append a `research-log/` entry, commit+push.
+
 ## Where things are
 | Path | What |
 |---|---|
-| `catalog/exploits.yaml` | The 31 detectors (single source of truth). Schema + how-to in `catalog/README.md`. |
-| `poc/` | Foundry project: one `Vulnerable<X>`+`Safe<X>`+test per detector. `cd poc && forge test` = 64 green. |
-| `ethernaut/` | Wargame harness. `cd ethernaut && forge test` = **34/34 green** (34 of 40 levels). |
+| `catalog/exploits.yaml` | The 35 detectors (single source of truth). Schema + how-to in `catalog/README.md`. |
+| `poc/` | Foundry project: one `Vulnerable<X>`+`Safe<X>`+test per detector. `cd poc && forge test` = **66 green** (native, no Rosetta). |
+| `ethernaut/` | Wargame harness. **37/40 solved**; full `cd ethernaut && forge test` needs Rosetta (see build note) — until then verify per-level in isolation. |
 | `dvd/` | Damn Vulnerable DeFi v4 solutions — **18/18**. |
 | `docs/` | The just-the-docs site (`the-catalog.md`, `pocs.md`, `ethernaut-wargame.md`, `dvd-wargame.md`, `exploits/<id>.md`). |
 | `intake/backlog.md` | The research backlog (9 P1/P2 seed rows still `todo`). |
@@ -50,16 +73,21 @@ Current totals: **catalog 35 detectors** · **poc 66 tests** · **Ethernaut 37/4
 ## The immediate job: the 3 remaining deferred Ethernaut levels
 
 Ethernaut grew to **40 playable levels**; we solve 37. The 3 open ones are fully evaluated +
-exploit-sketched in [`docs/ethernaut-wargame.md` § The newer levels](docs/ethernaut-wargame.md).
-Sources are in the OZ repo (`OpenZeppelin/ethernaut`, `contracts/src/levels/<Name>.sol` +
-`<Name>Factory.sol` — the factory's `validateInstance` is the win condition you must satisfy).
+exploit-sketched in [`docs/ethernaut-wargame.md` § The newer levels](docs/ethernaut-wargame.md), with a
+deeper per-level analysis (why each is still open + the concrete next step) in
+[`research-log/2026-06-06-remaining-three-analysis.md`](research-log/2026-06-06-remaining-three-analysis.md)
+— **read that first.** Sources are in the OZ repo (`OpenZeppelin/ethernaut`,
+`contracts/src/levels/<Name>.sol` + `<Name>Factory.sol` — the factory's `validateInstance` is the win
+condition you must satisfy).
 
 To add a level: vendor `src/levels/<Name>.sol` into `ethernaut/src/levels/`, point its imports at the
 existing shims (`openzeppelin-contracts-08/` → `src/vendor/oz/`; `-v4.6.0/` and `-v5.4.0/` are remapped
 there too), add any missing shim under `src/vendor/oz/`, then write `test/<Name>.t.sol` that deploys
 the level (mirroring the factory's `createInstance`) and asserts `validateInstance`'s condition. Shims
 already present: `Ownable`, `ERC20` (+`_mint`/`_burn`/`transferOwnership`), `ECDSA` (65 + EIP-2098 64-byte
-+ low-s reject), `ReentrancyGuard`, `Proxy`, `Address`.
++ low-s reject), `ReentrancyGuard` (both `security/` and `utils/`), `Proxy`, `Address`, and (added for
+UniqueNFT) minimal OZ-v5 **ERC721** (`token/ERC721/ERC721.sol` + `IERC721Receiver.sol` +
+`utils/ERC721Utils.sol`). Still missing for Cashback: `ERC1155`, `TransientSlot`, `IERC20`/`IERC721`.
 
 Ordered by value/tractability:
 
