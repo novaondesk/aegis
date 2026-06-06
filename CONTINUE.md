@@ -28,7 +28,7 @@ the next moves*, written 2026-06-04.
 | `intake/backlog.md` | The research backlog (9 P1/P2 seed rows still `todo`). |
 | `research-log/` | **Append a dated entry every session.** |
 
-Current totals: **catalog 35 detectors** · **poc 66 tests** · **Ethernaut 35/40** · **DVD 18/18**.
+Current totals: **catalog 35 detectors** · **poc 66 tests** · **Ethernaut 37/40** · **DVD 18/18**.
 
 > **Build note (Apple Silicon):** the older levels pin x86-only `solc` 0.5.x/0.6.x, so the *full*
 > `cd ethernaut && forge test` needs **Rosetta 2** (`sudo softwareupdate --install-rosetta`). Without
@@ -41,10 +41,15 @@ Current totals: **catalog 35 detectors** · **poc 66 tests** · **Ethernaut 35/4
   without the factory init; encoded `v` as 32 bytes). Rewritten + verified in isolation; counts 34→35.
 - New catalog detector **`ecdsa-nonce-reuse-key-extraction`** (full four-places unit; on-chain key
   recovery via the modexp precompile; `poc` 64→66). catalog 34→35 detectors.
+- **MagicAnimalCarousel** ✅ solved (35→36) — XOR-write corruption via the `% MAX_CAPACITY` wrap to
+  `nextId==0` (revisit unguarded crate 0). See `research-log/2026-06-06-magic-animal-carousel.md`.
+- **UniqueNFT** ✅ solved (36→37) — CEI reentrancy; the player EOA gains code (EIP-7702, modeled with
+  `vm.etch` since the suite is paris-pinned) so its `onERC721Received` re-enters `mintNFTEOA`. Added
+  minimal OZ-v5 ERC721 shims under `src/vendor/oz/`. See `research-log/2026-06-06-uniquenft-7702-reentrancy.md`.
 
-## The immediate job: the 5 remaining deferred Ethernaut levels
+## The immediate job: the 3 remaining deferred Ethernaut levels
 
-Ethernaut grew to **40 playable levels**; we solve 35. The 5 open ones are fully evaluated +
+Ethernaut grew to **40 playable levels**; we solve 37. The 3 open ones are fully evaluated +
 exploit-sketched in [`docs/ethernaut-wargame.md` § The newer levels](docs/ethernaut-wargame.md).
 Sources are in the OZ repo (`OpenZeppelin/ethernaut`, `contracts/src/levels/<Name>.sol` +
 `<Name>Factory.sol` — the factory's `validateInstance` is the win condition you must satisfy).
@@ -58,29 +63,26 @@ already present: `Ownable`, `ERC20` (+`_mint`/`_burn`/`transferOwnership`), `ECD
 
 Ordered by value/tractability:
 
-1. **UniqueNFT** — `checkOnERC721Received` fires *before* `_mint`/balance update → reentrancy, but the
-   player EOA must have code for the hook to fire. Use **EIP-7702**: `vm.signAndAttachDelegation` to
-   delegate the player EOA to an attacker contract whose `onERC721Received` re-enters `mintNFTEOA`
-   (passes `tx.origin == msg.sender` because the EOA *is* the caller) while balance is still 0 → 2 NFTs.
-   Needs an OZ 5.x ERC721 shim (`_update` override + `ERC721Utils.checkOnERC721Received`). Win:
-   `balanceOf(player) > 1`. Maps to `cei-reentrancy` (+ a 7702 angle worth a detector note).
-2. **Cashback** — EIP-7702 again: win requires the player EOA's code to equal the 7702 delegation
-   designator `0xef0100‖instance` and to accrue cashback via the delegated flow. Brand-new
-   account-abstraction class — **candidate new detector** (7702 delegation abuse). Heaviest (ERC-1155
-   + transient storage + the `onlyDelegatedToCashback` code-introspection modifier).
-3. **EllipticToken** — voucher/permit hash-domain confusion. The obvious `permit` drain of ALICE is
-   blocked by `usedHashes[bytes32(amount)]` (the voucher hash is already marked). Needs a deeper
-   insight (re-examine how `redeemVoucher` vs `permit` share `usedHashes` and whether a malleable/2098
-   variant of ALICE's voucher signature opens a different `amount`). Win: `balanceOf(ALICE) == 0`.
-4. **MagicAnimalCarousel** — pure bit-packing puzzle. `setAnimalAndSpin` writes the animal with `^`
-   (XOR), so a crate that already holds animal bits gets *corrupted* rather than overwritten; win when
-   the validator's `"Goat"` spin lands on a pre-filled crate (stored animal != Goat encoding). The
-   subtlety that ate a prior session: `changeAnimal`'s `encodedAnimal<<160` *ORs* into the `nextId`
-   field, and OR can only *set* bits — so naive setups can't point a crate's `nextId` "backward" to an
-   already-filled (lower-index) crate. The working angle is the `MAX_CAPACITY` (`% 65535`) wrap to reach
-   `nextId == 0` (revisiting crate 0, which the constructor pre-initializes and which has *no* owner
-   check in `changeAnimal`). No external deps. **Catalog gap** (arithmetic/bit-encoding).
-5. **NotOptimisticPortal** — Optimism portal message-verification (~9.5KB, needs the OP stack
+1. **EllipticToken** — voucher/permit hash-domain confusion. Win: `balanceOf(ALICE) == 0` (factory mints
+   ALICE 10 ETK). **Analysis so far (next contributor, start here):** the only lever to move ALICE's
+   tokens is `permit`, which `_approve`s `tokenOwner→spender` with `tokenOwner = ECDSA.recover(bytes32(amount),
+   sig)` and `spender` signing `keccak256(abi.encodePacked(tokenOwner, spender, amount))` (you control
+   spender = your key). To approve *from ALICE* you must recover ALICE — and the only ALICE signature in
+   existence is `aliceSignature` over the voucher hash `VH = keccak256(abi.encodePacked(10e18, ALICE, salt))`
+   (from `createInstance`). That forces `bytes32(amount) == VH` ⇒ `amount = uint256(VH)`, but
+   `redeemVoucher` already set `usedHashes[VH] = true`, so `require(!usedHashes[bytes32(amount)])` reverts.
+   The unsolved crux: find a way to recover ALICE over a NON-used 32-byte message. Re-examine OZ-v4 `ECDSA`'s
+   EIP-2098 short-sig path + zero-address/`ecrecover(0,…)` quirks, and whether `permit`'s
+   `usedHashes[permitHash]` vs `usedHashes[bytes32(amount)]` (only `permitHash` is nullified on use) leaves a
+   gap. Win then: `permit` ALICE→you for a huge amount, `transferFrom(ALICE, you, 10e18)`.
+2. **Cashback** — EIP-7702: win requires the player EOA's code to equal the 7702 delegation designator
+   `0xef0100‖instance` and to accrue cashback via the delegated flow. Brand-new account-abstraction class —
+   **candidate new detector** (7702 delegation abuse). Heaviest (ERC-1155 + transient storage + the
+   `onlyDelegatedToCashback` code-introspection modifier). NOTE: the suite is **paris**-pinned; the
+   `vm.etch`-models-7702 trick used for UniqueNFT may not suffice here because the win literally checks the
+   EOA's code *equals the 7702 designator bytes* — this likely needs a `prague` test profile (or a `vm.etch`
+   of the exact `0xef0100‖instance` designator bytes). Vendor an OZ-v5 ERC-1155 shim.
+3. **NotOptimisticPortal** — Optimism portal message-verification (~9.5KB, needs the OP stack
    vendored). Maps to the `verus-bridge-merkle-forgery` family. Lowest priority (infra-heavy).
 
 When you finish a level: update `ethernaut/README.md` + `docs/ethernaut-wargame.md` counts/table,
