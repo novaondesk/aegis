@@ -64,6 +64,26 @@ Legend: 🤖 = an automated tool/rule can flag candidates · 👁 = needs human 
 - [ ] **SC02-LEGACY:** Are deprecated/legacy contracts still accessible on-chain? Even if
       the frontend disables them, can they be called directly? *Transit Finance: $1.88M —
       deprecated TRON contract from 2022 with known vulnerabilities still callable.*
+- [ ] 🤖 **SC02-BRIDGE-TON-1:** For TON bridge contracts: does the inbound message
+      validation verify BOTH (a) the sender jetton wallet's code hash against the canonical
+      code AND (b) the wallet's minter field against the expected jetton master for the
+      claimed asset? Code-hash-only verification allows contracts with canonical code but
+      attacker-controlled minters to impersonate legitimate jetton wallets.
+      *TAC Bridge: $2.85M — sequencer checked code hash but not minter provenance,
+      allowing jetton wallet impersonation and 302M fake BLUM minted in 5 txs.*
+- [ ] 👁 **SC02-BRIDGE-PROV-1:** For any cross-chain bridge: does the inbound verification
+      check the **full provenance chain** of the sender (code + context binding), or only
+      superficial properties (code hash, interface)? Incomplete provenance checks allow
+      look-alike contracts to impersonate legitimate senders. On TON: code hash + minter.
+      On EVM: bytecode + storage layout. On Solana: ownership + account data chain.
+      *TAC Bridge: $2.85M — code-hash-only verification bypassed by deploying a contract
+      with canonical code but attacker-controlled minter.*
+- [ ] 🤖 **SC02-MONITOR-1:** Does the bridge implement per-minter/per-source **rate limits**
+      and **supply invariants** as second-line defense? Even with correct verification,
+      anomalous mint volumes (per minter, per source wallet, per unit time) should trigger
+      automated circuit breakers. *TAC Bridge: 302M BLUM minted in 5 txs — rate-based
+      monitoring would have surfaced immediately. Post-mortem: "possibly more important
+      than audits."*
 - [ ] 👁 **SC02-SOLVER-1:** Does the contract use an **iterative solver** (Newton-Raphson,
       binary search, fixed-point iteration) to compute a critical invariant (supply, price,
       rate)? If so: (a) are domain preconditions (e.g., `A·Σ ≥ D·Π`) explicitly checked
