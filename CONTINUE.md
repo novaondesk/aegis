@@ -28,11 +28,23 @@ the next moves*, written 2026-06-04.
 | `intake/backlog.md` | The research backlog (9 P1/P2 seed rows still `todo`). |
 | `research-log/` | **Append a dated entry every session.** |
 
-Current totals: **catalog 31 detectors** · **poc 64 tests** · **Ethernaut 34/40** · **DVD 18/18**.
+Current totals: **catalog 35 detectors** · **poc 66 tests** · **Ethernaut 35/40** · **DVD 18/18**.
 
-## The immediate job: the 6 deferred Ethernaut levels
+> **Build note (Apple Silicon):** the older levels pin x86-only `solc` 0.5.x/0.6.x, so the *full*
+> `cd ethernaut && forge test` needs **Rosetta 2** (`sudo softwareupdate --install-rosetta`). Without
+> it, verify a single modern level in isolation with
+> `forge test --match-contract <X> --skip 'src/vendor/oz06/*' Token Fallout HigherOrder Reentrance Motorbike AlienCodex Ownable-05`.
+> The `poc/` suite is all `^0.8.20` and builds natively. **Do NOT delete the old levels to dodge this.**
 
-Ethernaut grew to **40 playable levels**; we solve 34. The 6 open ones are fully evaluated +
+## Done since last handoff (2026-06-06)
+- **ImpersonatorTwo** ✅ solved (k-reuse) — the prior commit's test never passed (assumed nonce 2
+  without the factory init; encoded `v` as 32 bytes). Rewritten + verified in isolation; counts 34→35.
+- New catalog detector **`ecdsa-nonce-reuse-key-extraction`** (full four-places unit; on-chain key
+  recovery via the modexp precompile; `poc` 64→66). catalog 34→35 detectors.
+
+## The immediate job: the 5 remaining deferred Ethernaut levels
+
+Ethernaut grew to **40 playable levels**; we solve 35. The 5 open ones are fully evaluated +
 exploit-sketched in [`docs/ethernaut-wargame.md` § The newer levels](docs/ethernaut-wargame.md).
 Sources are in the OZ repo (`OpenZeppelin/ethernaut`, `contracts/src/levels/<Name>.sol` +
 `<Name>Factory.sol` — the factory's `validateInstance` is the win condition you must satisfy).
@@ -46,36 +58,29 @@ already present: `Ownable`, `ERC20` (+`_mint`/`_burn`/`transferOwnership`), `ECD
 
 Ordered by value/tractability:
 
-1. **ImpersonatorTwo** — *highest value.* The factory's two signatures share the same `r`, which
-   means **ECDSA nonce (k) reuse → the owner's private key is recoverable**:
-   `k = (h1−h2)·inv(s1−s2) mod n`, `d = (s1·k − h1)·inv(r) mod n` (do `inv` via the modexp precompile
-   `0x05` with Fermat: `a^(n−2) mod n`). `h1`,`h2` are the two `toEthSignedMessageHash` messages the
-   owner signed (`"lock0"` and `"admin1"‖ADMIN` — mind the `Strings.toString(nonce)` + `abi.encodePacked`
-   ordering). Recover `d` in the test, then `vm.sign(d, ...)` to forge owner sigs → `setAdmin(player)`
-   → `switchLock` (unlock) → `withdraw`. Win: `instance.balance == 0`.
-   **This should also become a NEW catalog detector** `ecdsa-nonce-reuse-key-extraction` (full Aegis
-   unit per AGENTS.md: case study + catalog entry + `Vulnerable`/`Safe`/test + checklist + semgrep).
-2. **UniqueNFT** — `checkOnERC721Received` fires *before* `_mint`/balance update → reentrancy, but the
+1. **UniqueNFT** — `checkOnERC721Received` fires *before* `_mint`/balance update → reentrancy, but the
    player EOA must have code for the hook to fire. Use **EIP-7702**: `vm.signAndAttachDelegation` to
    delegate the player EOA to an attacker contract whose `onERC721Received` re-enters `mintNFTEOA`
    (passes `tx.origin == msg.sender` because the EOA *is* the caller) while balance is still 0 → 2 NFTs.
    Needs an OZ 5.x ERC721 shim (`_update` override + `ERC721Utils.checkOnERC721Received`). Win:
    `balanceOf(player) > 1`. Maps to `cei-reentrancy` (+ a 7702 angle worth a detector note).
-3. **Cashback** — EIP-7702 again: win requires the player EOA's code to equal the 7702 delegation
+2. **Cashback** — EIP-7702 again: win requires the player EOA's code to equal the 7702 delegation
    designator `0xef0100‖instance` and to accrue cashback via the delegated flow. Brand-new
    account-abstraction class — **candidate new detector** (7702 delegation abuse). Heaviest (ERC-1155
    + transient storage + the `onlyDelegatedToCashback` code-introspection modifier).
-4. **EllipticToken** — voucher/permit hash-domain confusion. The obvious `permit` drain of ALICE is
+3. **EllipticToken** — voucher/permit hash-domain confusion. The obvious `permit` drain of ALICE is
    blocked by `usedHashes[bytes32(amount)]` (the voucher hash is already marked). Needs a deeper
    insight (re-examine how `redeemVoucher` vs `permit` share `usedHashes` and whether a malleable/2098
    variant of ALICE's voucher signature opens a different `amount`). Win: `balanceOf(ALICE) == 0`.
-5. **MagicAnimalCarousel** — pure bit-packing puzzle. `ANIMAL_MASK`/`NEXT_ID_MASK` overlap (note
-   `<<160+16` precedence) and `setAnimalAndSpin` writes the animal with `^` (XOR), so a crate that
-   already holds animal bits gets *corrupted* rather than overwritten. Arrange (via `changeAnimal`,
-   whose `encodedAnimal<<160` bleeds into the nextId field) for the validator's `"Goat"` spin to land
-   on a pre-filled crate. Win: stored animal != Goat encoding. No external deps. This is a **catalog
-   gap** (arithmetic/bit-encoding).
-6. **NotOptimisticPortal** — Optimism portal message-verification (~9.5KB, needs the OP stack
+4. **MagicAnimalCarousel** — pure bit-packing puzzle. `setAnimalAndSpin` writes the animal with `^`
+   (XOR), so a crate that already holds animal bits gets *corrupted* rather than overwritten; win when
+   the validator's `"Goat"` spin lands on a pre-filled crate (stored animal != Goat encoding). The
+   subtlety that ate a prior session: `changeAnimal`'s `encodedAnimal<<160` *ORs* into the `nextId`
+   field, and OR can only *set* bits — so naive setups can't point a crate's `nextId` "backward" to an
+   already-filled (lower-index) crate. The working angle is the `MAX_CAPACITY` (`% 65535`) wrap to reach
+   `nextId == 0` (revisiting crate 0, which the constructor pre-initializes and which has *no* owner
+   check in `changeAnimal`). No external deps. **Catalog gap** (arithmetic/bit-encoding).
+5. **NotOptimisticPortal** — Optimism portal message-verification (~9.5KB, needs the OP stack
    vendored). Maps to the `verus-bridge-merkle-forgery` family. Lowest priority (infra-heavy).
 
 When you finish a level: update `ethernaut/README.md` + `docs/ethernaut-wargame.md` counts/table,
