@@ -1,11 +1,11 @@
 # Aegis vs. the Ethernaut wargame
 
-Aegis solves **36 of the 40 levels** of OpenZeppelin's [Ethernaut](https://ethernaut.openzeppelin.com/)
+Aegis solves **37 of the 40 levels** of OpenZeppelin's [Ethernaut](https://ethernaut.openzeppelin.com/)
 CTF using its own methodology — the [`aegis-audit`](../skills/aegis-audit/SKILL.md) loop run against the
 [exploit catalog](../catalog/exploits.yaml). For each level: **RECON** the source → **SWEEP** it
 against the catalog → **PROVE** by exploiting the real level contract and asserting the level's own
 win condition. Every level is deployed and exploited locally in Foundry ([`ethernaut/`](../ethernaut/),
-`cd ethernaut && forge test` → **36 passing**).
+`cd ethernaut && forge test` → **37 passing**).
 
 > Ethernaut has grown past the classic 31 — there are now **40 playable levels**. The first 31 are all
 > solved (below); the 9 newer ones are evaluated in [§ The newer levels](#the-newer-levels-3240), with
@@ -87,16 +87,16 @@ Upstream Ethernaut added 9 levels past the classic 31. Catalog sweep + status:
 | **ImpersonatorTwo** | SC01 | **`ecdsa-nonce-reuse-key-extraction`** | ✅ solved — two factory sigs share the same `r` ⇒ **ECDSA nonce reuse leaks the owner key** (`k = (h1−h2)·inv(s1−s2)`, `d = (s1·k−h1)·inv(r)`); forge owner sigs → `setAdmin(player)` → `switchLock` → `withdraw`. Surfaced the *new* `ecdsa-nonce-reuse-key-extraction` detector |
 | **EllipticToken** | SC01 | `signature-replay-malleability` | ⏳ deferred — voucher/permit hash-domain confusion; the obvious `permit` route is blocked by `usedHashes[bytes32(amount)]`, needs a deeper insight |
 | **MagicAnimalCarousel** | SC07 | *gap* (bit-packing) | ✅ solved — `setAnimalAndSpin` XOR-writes the animal, so a pre-filled crate corrupts it. `changeAnimal` only ORs the nextId (no backward pointer), so route a spin through crate 65534 whose nextId wraps (`% MAX_CAPACITY`) to 0, pre-fill the unguarded crate 0, and let the Goat spin land there. **Catalog gap → bit-encoding detector candidate** |
-| **UniqueNFT** | SC08 | `cei-reentrancy` (+ **EIP-7702**) | ⏳ deferred — `checkOnERC721Received` fires before `_mint`; reentrancy needs the player EOA to have code, i.e. an **EIP-7702 delegation** |
+| **UniqueNFT** | SC08 | `cei-reentrancy` (+ **EIP-7702**) | ✅ solved — `checkOnERC721Received` fires before `_mint` (CEI violation); `mintNFTEOA` is not `nonReentrant` and only checks `tx.origin==msg.sender`. Give the player EOA code (EIP-7702 delegation; modeled with `vm.etch` under the paris-pinned suite) so its receiver hook re-enters while balance is still 0 → 2 mints |
 | **Cashback** | — | *gap* (**EIP-7702**) | ⏳ deferred — win requires the player EOA's code to equal the 7702 designator `0xef0100‖instance`; brand-new account-abstraction class |
 | **NotOptimisticPortal** | SC02 | `verus-bridge-merkle-forgery` (fam) | ⏳ deferred — Optimism portal message-verification; needs the OP stack vendored |
 
-**5 / 9 solved in-harness; all 9 evaluated.** The catalog validations (Impersonator, Forger
-→ `signature-replay-malleability`; BetHouse → `cei-reentrancy`), ImpersonatorTwo (→ the new
+**6 / 9 solved in-harness; all 9 evaluated.** The catalog validations (Impersonator, Forger
+→ `signature-replay-malleability`; BetHouse, UniqueNFT → `cei-reentrancy`), ImpersonatorTwo (→ the new
 `ecdsa-nonce-reuse-key-extraction` detector), and MagicAnimalCarousel (bit-packing) are added to
-`ethernaut/test/`. The 4 deferred split into **infra-heavy** (UniqueNFT + Cashback need EIP-7702;
-NotOptimisticPortal needs the Optimism stack) and a **deeper puzzle** (EllipticToken's domain
-confusion).
+`ethernaut/test/`. The 3 deferred: **infra-heavy** (Cashback needs EIP-7702 + ERC-1155 + transient
+storage; NotOptimisticPortal needs the Optimism stack) and a **deeper puzzle** (EllipticToken's
+domain confusion).
 
 ## Gaps the wargame surfaced (the to-do list)
 
