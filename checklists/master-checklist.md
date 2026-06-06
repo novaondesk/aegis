@@ -309,6 +309,12 @@ losses.
 - [ ] Malleability handled (use ECDSA lib, reject high-s)? `SOL-Signature-2`
 - [ ] ecrecover return checked against `address(0)` and expected signer? `SOL-Signature-3`,`-4`
 - [ ] Deadline enforced? `SOL-Signature-5`
+- [ ] **Signer nonce discipline:** does any trusted signer/oracle/validator key sign more than once,
+      and is its per-signature nonce k provably unique (RFC-6979 / HSM CSPRNG, never an on-chain or
+      counter-derived value)? Two signatures sharing the same `r` leak the private key
+      (`k=(h1-h2)/(s1-s2)`, `d=(s1*k-h1)/r`) and forge every signature-gated action — and **no
+      on-chain check prevents it.** Mine the signer's historical signatures for a repeated `r`.
+      `SC01-NONCE-REUSE` → `ecdsa-nonce-reuse-key-extraction`
 
 ### Multi-chain / Cross-chain (Kelp-class territory)
 - [ ] Cross-chain message verifies **source chain + sender + nonce**; DVN/verifier set

@@ -508,3 +508,19 @@ cd poc && forge test --match-contract DosGriefingRevert -vv
 [PoC test](https://github.com/novaondesk/aegis/blob/main/poc/test/DosGriefingRevert.t.sol) · [case study](https://github.com/novaondesk/aegis/blob/main/docs/exploits/dos-griefing-revert.md)
 
 ---
+
+## ecdsa-nonce-reuse-key-extraction
+{: #ecdsa-nonce-reuse-key-extraction }
+
+**Class** SC01 · **Chains** evm · **Status** `coded`
+
+ECDSA signs as `s = k⁻¹(h + r·d)` with a per-signature secret nonce `k` (and `r = (k·G).x`). If a signer reuses `k` for two different messages, both signatures share `r`, and the long-term private key falls out: `k = (h1−h2)·inv(s1−s2)`, `d = (s1·k − h1)·inv(r)` (mod n). The attacker then forges signatures indistinguishable from the real signer's. **No verifier-side check (nonce binding, EIP-712 domain, low-s) prevents it** — the defect is the signer's nonce generation. The PoC recovers the key *on-chain* via the modexp precompile (`0x05`) and drains a signature-gated vault. Ethernaut ImpersonatorTwo; Sony PS3 (2010). Fix: RFC-6979 / HSM CSPRNG nonces; rotate any key whose signatures ever shared an `r`.
+
+**Invariant:** the signer's private key never leaks — only the key holder can produce a valid signature (requires a unique `k` per signature)
+
+```
+cd poc && forge test --match-contract NonceReuse -vv
+```
+[PoC test](https://github.com/novaondesk/aegis/blob/main/poc/test/NonceReuse.t.sol) · [case study](https://github.com/novaondesk/aegis/blob/main/docs/exploits/ecdsa-nonce-reuse-key-extraction.md)
+
+---

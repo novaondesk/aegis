@@ -1,0 +1,23 @@
+rules:
+  - id: ecdsa-signer-weak-nonce
+    patterns:
+      - pattern-regex: '(?i)(nonce|\bk\b|secret|rand)\s*=\s*.*(block\.(timestamp|number|prevrandao|difficulty)|blockhash|now|keccak256\([^)]*block\.)'
+    message: >
+      Possible ECDSA/commitment nonce derived from predictable on-chain data
+      (block.timestamp/number/prevrandao/blockhash). For an ECDSA signer the per-signature
+      nonce k MUST be unique and unpredictable — reusing or predicting k across two messages
+      leaks the long-term private key (k=(h1-h2)/(s1-s2), d=(s1*k-h1)/r) and forges every
+      signature-gated action. Use RFC-6979 / a vetted CSPRNG off-chain; never derive k on-chain.
+      This is a HEURISTIC: the real defect is signer-side, so also mine the signer's historical
+      signatures for any repeated r. Class: ecdsa-nonce-reuse-key-extraction.
+    severity: WARNING
+    languages: [solidity]
+    metadata:
+      cwe:
+        - "CWE-323: Reusing a Nonce, Key Pair in Encryption"
+        - "CWE-340: Generation of Predictable Numbers or Identifiers"
+      owasp-sc: [SC01]
+      references:
+        - "RFC 6979 — deterministic ECDSA nonce generation"
+        - "fail0verflow / Sony PS3 ECDSA key recovery (reused k)"
+      exploit-id: ecdsa-nonce-reuse-key-extraction

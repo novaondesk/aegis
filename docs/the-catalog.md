@@ -39,7 +39,7 @@ Every entry is a detector with these fields:
 | `poc` / `poc_cmd` | runnable proof + how to run it |
 | `fork_poc` | (optional) a real mainnet-fork replay |
 
-## All 34 detectors
+## All 35 detectors
 
 | # | Detector (`id`) | Class | Chains | Status |
 |---|---|---|---|---|
@@ -74,9 +74,10 @@ Every entry is a detector with these fields:
 | 29 | [`calldata-abi-smuggling`](pocs#calldata-abi-smuggling) | SC05/SC01 | evm | coded |
 | 30 | [`forced-ether-balance-assumption`](pocs#forced-ether-balance-assumption) | SC02 | evm | coded |
 | 31 | [`dos-griefing-revert`](pocs#dos-griefing-revert) | SC10/SC02 | evm | coded |
-| 32 | `yearn-yeth-solver-underflow` | SC02/SC07 | evm | studied |
-| 33 | `transit-finance-legacy-approval-drain` | SC02 | evm/tron | studied |
-| 34 | `hyperbridge-mmr-leaf-index` | SC02 | substrate/multi | studied |
+| 32 | [`ecdsa-nonce-reuse-key-extraction`](pocs#ecdsa-nonce-reuse-key-extraction) | SC01 | evm | coded |
+| 33 | `yearn-yeth-solver-underflow` | SC02/SC07 | evm | studied |
+| 34 | `transit-finance-legacy-approval-drain` | SC02 | evm/tron | studied |
+| 35 | `hyperbridge-mmr-leaf-index` | SC02 | substrate/multi | studied |
 
 > Entries 28–31 were mined from the **wargames** (DVD v4 Naive Receiver / ABI Smuggling, Ethernaut
 > Force/King/Denial/Switch) — the loop working as intended: a level solved by a general technique
