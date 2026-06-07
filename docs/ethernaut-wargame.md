@@ -1,15 +1,14 @@
 # Aegis vs. the Ethernaut wargame
 
-Aegis solves **37 of the 40 levels** of OpenZeppelin's [Ethernaut](https://ethernaut.openzeppelin.com/)
+Aegis solves **38 of the 40 levels** of OpenZeppelin's [Ethernaut](https://ethernaut.openzeppelin.com/)
 CTF using its own methodology — the [`aegis-audit`](../skills/aegis-audit/SKILL.md) loop run against the
 [exploit catalog](../catalog/exploits.yaml). For each level: **RECON** the source → **SWEEP** it
 against the catalog → **PROVE** by exploiting the real level contract and asserting the level's own
 win condition. Every level is deployed and exploited locally in Foundry ([`ethernaut/`](../ethernaut/),
-`cd ethernaut && forge test` → **37 passing**).
+`cd ethernaut && forge test` → **38 passing**).
 
 > Ethernaut has grown past the classic 31 — there are now **40 playable levels**. The first 31 are all
-> solved (below); the 9 newer ones are evaluated in [§ The newer levels](#the-newer-levels-3240), with
-> 3 solved in-harness (Impersonator, Forger, BetHouse) and 6 deferred (infra-heavy / deeper puzzles).
+> solved (below); the 9 newer ones are evaluated in [§ The newer levels](#the-newer-levels-3240), with 7 solved in-harness; 2 deferred (Cashback EIP-7702, NotOptimisticPortal OP-stack).
 
 Two things come out of this:
 1. **Validation** — the catalog detectors mined from real hacks ($292M Kelp, $181M Beanstalk, …) map
@@ -85,13 +84,13 @@ Upstream Ethernaut added 9 levels past the classic 31. Catalog sweep + status:
 | **Forger** | SC01 | **`signature-replay-malleability`** | ✅ solved — replay-guard keys on `keccak256(signature)`, but OZ `ECDSA.recover` accepts the EIP-2098 64-byte compact form of the same sig → mint 100+100 = 200 |
 | **BetHouse** | SC08 | **`cei-reentrancy`** | ✅ solved — `Pool.withdrawAll` refunds ETH (`.call`) before burning wrapped; re-deposit in the callback to transiently reach the 20-token bet threshold, then `makeBet(player)` |
 | **ImpersonatorTwo** | SC01 | **`ecdsa-nonce-reuse-key-extraction`** | ✅ solved — two factory sigs share the same `r` ⇒ **ECDSA nonce reuse leaks the owner key** (`k = (h1−h2)·inv(s1−s2)`, `d = (s1·k−h1)·inv(r)`); forge owner sigs → `setAdmin(player)` → `switchLock` → `withdraw`. Surfaced the *new* `ecdsa-nonce-reuse-key-extraction` detector |
-| **EllipticToken** | SC01 | `signature-replay-malleability` | ⏳ deferred — voucher/permit hash-domain confusion; the obvious `permit` route is blocked by `usedHashes[bytes32(amount)]`, needs a deeper insight |
+| **EllipticToken** | SC01 | **`signature-replay-malleability`** (raw-ECDSA forgery) | ✅ solved — `permit` recovers the owner from `ECDSA.recover(bytes32(amount), sig)`; raw ECDSA over an unconstrained message is **existentially forgeable**. Recover ALICE's *public* key from her public voucher sig, then forge `P=a·G+b·Q ; r=P.x ; s=r·b⁻¹ ; z=a·s` so `ecrecover(z,…)==ALICE` over a fresh `z` (≠ voucherHash, so `usedHashes[z]` unset) → `_approve(ALICE, attacker, z)` → drain. No private key used; see `script/elliptic_forge.py` |
 | **MagicAnimalCarousel** | SC07 | *gap* (bit-packing) | ✅ solved — `setAnimalAndSpin` XOR-writes the animal, so a pre-filled crate corrupts it. `changeAnimal` only ORs the nextId (no backward pointer), so route a spin through crate 65534 whose nextId wraps (`% MAX_CAPACITY`) to 0, pre-fill the unguarded crate 0, and let the Goat spin land there. **Catalog gap → bit-encoding detector candidate** |
 | **UniqueNFT** | SC08 | `cei-reentrancy` (+ **EIP-7702**) | ✅ solved — `checkOnERC721Received` fires before `_mint` (CEI violation); `mintNFTEOA` is not `nonReentrant` and only checks `tx.origin==msg.sender`. Give the player EOA code (EIP-7702 delegation; modeled with `vm.etch` under the paris-pinned suite) so its receiver hook re-enters while balance is still 0 → 2 mints |
 | **Cashback** | — | *gap* (**EIP-7702**) | ⏳ deferred — win requires the player EOA's code to equal the 7702 designator `0xef0100‖instance`; brand-new account-abstraction class |
 | **NotOptimisticPortal** | SC02 | `verus-bridge-merkle-forgery` (fam) | ⏳ deferred — Optimism portal message-verification; needs the OP stack vendored |
 
-**6 / 9 solved in-harness; all 9 evaluated.** The catalog validations (Impersonator, Forger
+**7 / 9 solved in-harness; all 9 evaluated.** The catalog validations (Impersonator, Forger
 → `signature-replay-malleability`; BetHouse, UniqueNFT → `cei-reentrancy`), ImpersonatorTwo (→ the new
 `ecdsa-nonce-reuse-key-extraction` detector), and MagicAnimalCarousel (bit-packing) are added to
 `ethernaut/test/`. The 3 deferred: **infra-heavy** (Cashback needs EIP-7702 + ERC-1155 + transient
