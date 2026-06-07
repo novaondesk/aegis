@@ -212,6 +212,13 @@ Legend: 🤖 = an automated tool/rule can flag candidates · 👁 = needs human 
 - [ ] `_disableInitializers()` in impl constructor? Uninitialized impl seizable?
 - [ ] Upgrade authority: timelock? multisig? Can a single key rug via upgrade?
 - [ ] `delegatecall` to untrusted/user-controlled target?
+- [ ] 👁 **SC-storage-layout-02:** Does the contract use Solady (or other library) with a fixed
+      pseudo-random storage slot (e.g. `_REENTRANCY_GUARD_SLOT`)? Do any attacker-influenceable
+      `mapping(address => ...)` have entries whose computed slot
+      (`keccak256(abi.encode(key, baseSlot))`) could collide with that library slot? The
+      collision turns a security write (reentrancy guard) into a value-inflation oracle.
+      *ATOHook: $14.4 ETH — `rewards[addr]` slot collided with Solady's guard slot,
+      nonReentrant write inflated rewards, attacker drained via repeated getReward() calls.*
 
 ## SC09 — Overflow/Underflow 🤖
 - [ ] Solidity <0.8 without SafeMath anywhere? `unchecked{}` blocks audited by hand?
