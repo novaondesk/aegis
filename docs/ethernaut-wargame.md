@@ -1,14 +1,14 @@
 # Aegis vs. the Ethernaut wargame
 
-Aegis solves **39 of the 40 levels** of OpenZeppelin's [Ethernaut](https://ethernaut.openzeppelin.com/)
+Aegis solves **all 40 levels** of OpenZeppelin's [Ethernaut](https://ethernaut.openzeppelin.com/)
 CTF using its own methodology — the [`aegis-audit`](../skills/aegis-audit/SKILL.md) loop run against the
 [exploit catalog](../catalog/exploits.yaml). For each level: **RECON** the source → **SWEEP** it
 against the catalog → **PROVE** by exploiting the real level contract and asserting the level's own
 win condition. Every level is deployed and exploited locally in Foundry ([`ethernaut/`](../ethernaut/),
-`cd ethernaut && forge test` → **39 passing**).
+`cd ethernaut && forge test` → **40 passing**).
 
 > Ethernaut has grown past the classic 31 — there are now **40 playable levels**. The first 31 are all
-> solved (below); the 9 newer ones are evaluated in [§ The newer levels](#the-newer-levels-3240), with 8 solved in-harness; 1 deferred (NotOptimisticPortal — OP-stack proof libs).
+> solved (below); the 9 newer ones are evaluated in [§ The newer levels](#the-newer-levels-3240), with all 9 now solved in-harness.
 
 Two things come out of this:
 1. **Validation** — the catalog detectors mined from real hacks ($292M Kelp, $181M Beanstalk, …) map
@@ -88,14 +88,15 @@ Upstream Ethernaut added 9 levels past the classic 31. Catalog sweep + status:
 | **MagicAnimalCarousel** | SC07 | *gap* (bit-packing) | ✅ solved — `setAnimalAndSpin` XOR-writes the animal, so a pre-filled crate corrupts it. `changeAnimal` only ORs the nextId (no backward pointer), so route a spin through crate 65534 whose nextId wraps (`% MAX_CAPACITY`) to 0, pre-fill the unguarded crate 0, and let the Goat spin land there. **Catalog gap → bit-encoding detector candidate** |
 | **UniqueNFT** | SC08 | `cei-reentrancy` (+ **EIP-7702**) | ✅ solved — `checkOnERC721Received` fires before `_mint` (CEI violation); `mintNFTEOA` is not `nonReentrant` and only checks `tx.origin==msg.sender`. Give the player EOA code (EIP-7702 delegation; modeled with `vm.etch` under the paris-pinned suite) so its receiver hook re-enters while balance is still 0 → 2 mints |
 | **Cashback** | SC01/SC02 | *gap* (**forged-7702-designator / trusted-amount**) | ✅ solved — `onlyDelegatedToCashback` trusts `msg.sender.code[23:]`, so a forged proxy (Cashback addr planted at that offset + minimal-proxy delegatecall to attacker logic) passes it; the logic returns `isUnlocked()=true`/`consumeNonce()=10000` and `accrueCashback` *trusts `amount`* → mint max FREE+NATIVE cashback + NFT with no real transfer. Move points/NFT to the player while it's a codeless EOA (raw `_update`/EOA = no ERC1155 acceptance check), set the player's own NFT via a `layout at`-twin `NonceSetter` (nonce→9999), then 7702-delegate last. Needs `FOUNDRY_PROFILE=prague`. **Catalog gap → forged-delegation-designator / unverified-payment detector candidate** |
-| **NotOptimisticPortal** | SC02 | `verus-bridge-merkle-forgery` (fam) | ⏳ deferred — Optimism portal message-verification; needs the OP stack vendored |
+| **NotOptimisticPortal** | SC01/SC02 | *gap* (**selector-collision / forged L2 message**) | ✅ solved — `transferOwnership_____610165642(address)` shares selector `0x3a69197e` with `onMessageReceived(bytes)`, so `_executeOperation(portal, …)` grabs ownership via the portal's own self-call (`onlyOwner` accepts `address(this)`); `_computeMessageSlot`'s `i < len-1` off-by-one excludes the last op, so the *last* op (a helper now owning the portal) sets itself sequencer + `submitNewBlock` with a forged single-leaf state root; then a hand-built MPT proof (L2_TARGET → storageRoot → withdrawalHash=0x01) verifies → `_mint`. Vendored the OP RLP/Merkle-Trie libs. **Catalog gap → selector-collision / unverified-cross-chain-message detector candidate** |
 
-**8 / 9 solved in-harness; all 9 evaluated.** The catalog validations (Impersonator, Forger
+**9 / 9 solved in-harness.** The catalog validations (Impersonator, Forger
 → `signature-replay-malleability`; BetHouse, UniqueNFT → `cei-reentrancy`), ImpersonatorTwo (→ the new
 `ecdsa-nonce-reuse-key-extraction` detector), and MagicAnimalCarousel (bit-packing) are added to
-`ethernaut/test/`. The 3 deferred: **infra-heavy** (Cashback needs EIP-7702 + ERC-1155 + transient
-storage; NotOptimisticPortal needs the Optimism stack) and a **deeper puzzle** (EllipticToken's
-domain confusion).
+`ethernaut/test/`. The last three — once deferred as infra-/insight-heavy — are now solved too:
+EllipticToken (raw-ECDSA existential forgery), Cashback (forged EIP-7702 designator + trusted-amount
+accrual; `FOUNDRY_PROFILE=prague`), and NotOptimisticPortal (function-selector collision + forged L2
+Merkle proof). **All 40/40.**
 
 ## Gaps the wargame surfaced (the to-do list)
 

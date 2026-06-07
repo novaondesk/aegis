@@ -45,13 +45,13 @@ the next moves*, last updated 2026-06-06.
 |---|---|
 | `catalog/exploits.yaml` | The 35 detectors (single source of truth). Schema + how-to in `catalog/README.md`. |
 | `poc/` | Foundry project: one `Vulnerable<X>`+`Safe<X>`+test per detector. `cd poc && forge test` = **66 green** (native, no Rosetta). |
-| `ethernaut/` | Wargame harness. **39/40 solved**; full `cd ethernaut && forge test` needs Rosetta (see build note) — until then verify per-level in isolation. |
+| `ethernaut/` | Wargame harness. **40/40 solved 🏆**; full `cd ethernaut && forge test` needs Rosetta (see build note) — until then verify per-level in isolation. |
 | `dvd/` | Damn Vulnerable DeFi v4 solutions — **18/18**. |
 | `docs/` | The just-the-docs site (`the-catalog.md`, `pocs.md`, `ethernaut-wargame.md`, `dvd-wargame.md`, `exploits/<id>.md`). |
 | `intake/backlog.md` | The research backlog (9 P1/P2 seed rows still `todo`). |
 | `research-log/` | **Append a dated entry every session.** |
 
-Current totals: **catalog 36 detectors** · **poc 69 tests** · **Ethernaut 39/40** · **DVD 18/18**.
+Current totals: **catalog 36 detectors** · **poc 69 tests** · **Ethernaut 40/40** · **DVD 18/18**.
 
 > **Build note (Apple Silicon):** the older levels pin x86-only `solc` 0.5.x/0.6.x, so the *full*
 > `cd ethernaut && forge test` needs **Rosetta 2** (`sudo softwareupdate --install-rosetta`). Without
@@ -84,7 +84,7 @@ the instance so `msg.sender.code == 0xef0100‖instance`). **NotOptimisticPortal
 `Lib_RLPReader` + `Lib_SecureMerkleTrie` and find the proof-verification bug (`_executeOperation` runs
 attacker data before `_verifyMessageInclusion`) — heaviest, lowest priority.
 
-Ethernaut grew to **40 playable levels**; we solve 39. The open ones are fully evaluated +
+Ethernaut grew to **40 playable levels**; we solve all 40. The open ones are fully evaluated +
 exploit-sketched in [`docs/ethernaut-wargame.md` § The newer levels](docs/ethernaut-wargame.md), with a
 deeper per-level analysis (why each is still open + the concrete next step) in
 [`research-log/2026-06-06-remaining-three-analysis.md`](research-log/2026-06-06-remaining-three-analysis.md)
