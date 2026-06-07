@@ -45,13 +45,13 @@ the next moves*, last updated 2026-06-06.
 |---|---|
 | `catalog/exploits.yaml` | The 35 detectors (single source of truth). Schema + how-to in `catalog/README.md`. |
 | `poc/` | Foundry project: one `Vulnerable<X>`+`Safe<X>`+test per detector. `cd poc && forge test` = **66 green** (native, no Rosetta). |
-| `ethernaut/` | Wargame harness. **37/40 solved**; full `cd ethernaut && forge test` needs Rosetta (see build note) — until then verify per-level in isolation. |
+| `ethernaut/` | Wargame harness. **38/40 solved**; full `cd ethernaut && forge test` needs Rosetta (see build note) — until then verify per-level in isolation. |
 | `dvd/` | Damn Vulnerable DeFi v4 solutions — **18/18**. |
 | `docs/` | The just-the-docs site (`the-catalog.md`, `pocs.md`, `ethernaut-wargame.md`, `dvd-wargame.md`, `exploits/<id>.md`). |
 | `intake/backlog.md` | The research backlog (9 P1/P2 seed rows still `todo`). |
 | `research-log/` | **Append a dated entry every session.** |
 
-Current totals: **catalog 35 detectors** · **poc 66 tests** · **Ethernaut 37/40** · **DVD 18/18**.
+Current totals: **catalog 36 detectors** · **poc 69 tests** · **Ethernaut 38/40** · **DVD 18/18**.
 
 > **Build note (Apple Silicon):** the older levels pin x86-only `solc` 0.5.x/0.6.x, so the *full*
 > `cd ethernaut && forge test` needs **Rosetta 2** (`sudo softwareupdate --install-rosetta`). Without
@@ -70,9 +70,21 @@ Current totals: **catalog 35 detectors** · **poc 66 tests** · **Ethernaut 37/4
   `vm.etch` since the suite is paris-pinned) so its `onERC721Received` re-enters `mintNFTEOA`. Added
   minimal OZ-v5 ERC721 shims under `src/vendor/oz/`. See `research-log/2026-06-06-uniquenft-7702-reentrancy.md`.
 
-## The immediate job: the 3 remaining deferred Ethernaut levels
+## The immediate job: the 2 remaining deferred Ethernaut levels
 
-Ethernaut grew to **40 playable levels**; we solve 37. The 3 open ones are fully evaluated +
+**EllipticToken — SOLVED 2026-06-06** (raw-ECDSA existential forgery; `test/EllipticToken.t.sol`,
+`script/elliptic_forge.py`). 38/40. Two left: **Cashback** and **NotOptimisticPortal** — both
+infra-heavy. Toolchain is confirmed: forge 1.7.1 + solc 0.8.30 compiles Cashback's `contract … layout
+at <slot>` syntax under `evm_version=prague`. Remaining for **Cashback**: OZ **v5.4 is NOT vendored**
+(`src/vendor/oz/oz` is empty) — vendor ERC1155 + TransientSlot + IERC20/IERC721 (+ transitive deps:
+IERC1155/Receiver/MetadataURI, ERC165, Context, Arrays, Math, etc.) from the `v5.4.0` tag; add a
+`[profile.prague]` (evm_version=prague) so the paris default suite is untouched; vendor Cashback.sol +
+CashbackFactory (SuperCashbackNFT); solve via `vm.signAndAttachDelegation` (delegate the player EOA to
+the instance so `msg.sender.code == 0xef0100‖instance`). **NotOptimisticPortal**: vendor OP-stack
+`Lib_RLPReader` + `Lib_SecureMerkleTrie` and find the proof-verification bug (`_executeOperation` runs
+attacker data before `_verifyMessageInclusion`) — heaviest, lowest priority.
+
+Ethernaut grew to **40 playable levels**; we solve 38. The open ones are fully evaluated +
 exploit-sketched in [`docs/ethernaut-wargame.md` § The newer levels](docs/ethernaut-wargame.md), with a
 deeper per-level analysis (why each is still open + the concrete next step) in
 [`research-log/2026-06-06-remaining-three-analysis.md`](research-log/2026-06-06-remaining-three-analysis.md)
