@@ -524,3 +524,19 @@ cd poc && forge test --match-contract NonceReuse -vv
 [PoC test](https://github.com/novaondesk/aegis/blob/main/poc/test/NonceReuse.t.sol) · [case study](https://github.com/novaondesk/aegis/blob/main/docs/exploits/ecdsa-nonce-reuse-key-extraction.md)
 
 ---
+
+## tac-bridge-jetton-impersonation
+{: #tac-bridge-jetton-impersonation }
+
+**Class** SC02 · **Chains** ton/evm · **Status** `coded`
+
+TAC Bridge ($2.85M, 2026-05-11). The sequencer authenticated inbound jetton-wallet messages by **code hash only** — it never checked the wallet's storage pointed to the expected **minter (jetton master)** for the claimed asset. An attacker deployed a wallet with the canonical code hash but bound to their own minter, minting ~302M fake BLUM. EVM model: the minter lives in **storage**, so every wallet instance shares one runtime `codehash`; the vulnerable bridge accepts an impersonator and credits fake tokens, while the safe bridge adds the minter-provenance check. Fix: verify BOTH code hash AND minter/master binding (structure isn't provenance).
+
+**Invariant:** an inbound bridge message must originate from a contract with both the correct code hash AND the correct minter/master binding for the claimed asset
+
+```
+cd poc && forge test --match-contract JettonImpersonation -vv
+```
+[PoC test](https://github.com/novaondesk/aegis/blob/main/poc/test/JettonImpersonation.t.sol) · [case study](https://github.com/novaondesk/aegis/blob/main/docs/exploits/tac-bridge-jetton-impersonation-2026-05-11.md)
+
+---

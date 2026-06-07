@@ -3,7 +3,7 @@
 **Exploit-catalog-driven smart contract security auditing.**
 
 > 📖 **Docs site:** https://novaondesk.github.io/aegis/ ·
-> 🏴 **Wargames (catalog-driven):** [Ethernaut 31/31](docs/ethernaut-wargame.md) · [Damn Vulnerable DeFi 18/18](docs/dvd-wargame.md)
+> 🏴 **Wargames (catalog-driven):** [Ethernaut 40/40](docs/ethernaut-wargame.md) · [Damn Vulnerable DeFi 18/18](docs/dvd-wargame.md)
 
 Aegis evaluates a target contract or protocol against a curated catalog of *studied,
 real-world DeFi exploits* — so you can find vulnerabilities **and prove the fix** before
@@ -72,6 +72,8 @@ statement, the `variant_queries` grep-family that hunts the bug across a target,
 | Unverified flash-loan / external callback | SC05/SC01 | EVM | ✅ coded PoC |
 | Bridge credits a no-code-token deposit (Qubit $80M) | SC02 | EVM | ✅ coded PoC |
 | AMM-pair first-deposit / share-skim | SC07 | EVM | ✅ coded PoC |
+| ECDSA nonce-reuse key extraction | SC01 | EVM | ✅ coded PoC |
+| TAC Bridge jetton code-hash impersonation ($2.85M) | SC02 | TON (EVM model) | ✅ coded PoC |
 
 `coded` = runnable PoC in [`poc/`](poc/). *(EVM model)* = the incident was on a non-EVM
 chain (Solana/Move/NEAR) and the PoC reproduces the same broken invariant in Solidity, so
@@ -116,7 +118,7 @@ integration notes in [`docs/methodology/security-tooling-landscape.md`](docs/met
 | `tools/` | Slither config, semgrep rules, Foundry invariant templates |
 | `poc/` | Runnable Foundry PoCs — minimal *models* of catalog patterns (vulnerable + safe + test) |
 | `sim/` | **Fork-simulation** — exploit the *real deployed target* on a forked chain (the PROVE phase for live targets); 4 real incident replays |
-| `ethernaut/` | **Wargame validation** — Aegis solves the Ethernaut CTF via the catalog sweep (31/31); see [report](docs/ethernaut-wargame.md) |
+| `ethernaut/` | **Wargame validation** — Aegis solves the Ethernaut CTF via the catalog sweep (40/40); see [report](docs/ethernaut-wargame.md) |
 | `research-log/` | Dated log of what we looked at and found |
 
 ## Contributing (agents & humans)
@@ -138,11 +140,14 @@ detector → log.
 ## Status — v2.1.0
 
 See [`CHANGELOG.md`](CHANGELOG.md) and [`research-log/`](research-log/).
-- **Catalog:** 35 exploit detectors (30 with runnable model PoCs, 5 studied), machine-readable +
+- **Catalog:** 36 exploit detectors (31 with runnable model PoCs, 5 studied), machine-readable +
   agent-driven. v2.0.0 added 11 DeFiHackLabs-mined classes; v2.1.0 added Nova's 5 May-2026 studies
   (3 coded) and the fork-simulation capability; v2.4.0 added 4 wargame-mined classes (meta-tx spoof,
   ABI smuggling, forced-ether, DoS-griefing); v2.5.0 added `ecdsa-nonce-reuse-key-extraction`
-  (on-chain key recovery via the modexp precompile, from Ethernaut ImpersonatorTwo).
+  (on-chain key recovery via the modexp precompile, from Ethernaut ImpersonatorTwo); v2.6.0 added
+  `tac-bridge-jetton-impersonation` (code-hash-without-provenance) and **completed the Ethernaut
+  wargame — 40/40** (EllipticToken raw-ECDSA forgery, Cashback forged-7702 designator,
+  NotOptimisticPortal selector-collision + forged L2 proof).
 - **Fork-simulation (`sim/`):** prove findings against *real deployed targets* on a forked chain.
   4 real incident replays pass against mainnet state — Socket Gateway (approval drain, ~656k USDC),
   Audius (proxy storage collision, ~18.56M AUDIO), DAO Maker (unprotected init, 5.76M DERC), and

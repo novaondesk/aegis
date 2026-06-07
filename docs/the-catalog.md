@@ -39,7 +39,7 @@ Every entry is a detector with these fields:
 | `poc` / `poc_cmd` | runnable proof + how to run it |
 | `fork_poc` | (optional) a real mainnet-fork replay |
 
-## All 35 detectors
+## All 36 detectors
 
 | # | Detector (`id`) | Class | Chains | Status |
 |---|---|---|---|---|
@@ -78,6 +78,7 @@ Every entry is a detector with these fields:
 | 33 | `yearn-yeth-solver-underflow` | SC02/SC07 | evm | studied |
 | 34 | `transit-finance-legacy-approval-drain` | SC02 | evm/tron | studied |
 | 35 | `hyperbridge-mmr-leaf-index` | SC02 | substrate/multi | studied |
+| 36 | [`tac-bridge-jetton-impersonation`](pocs#tac-bridge-jetton-impersonation) | SC02 | ton/evm | coded |
 
 > Entries 28–31 were mined from the **wargames** (DVD v4 Naive Receiver / ABI Smuggling, Ethernaut
 > Force/King/Denial/Switch) — the loop working as intended: a level solved by a general technique
