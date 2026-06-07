@@ -30,6 +30,7 @@ Legend: 🤖 = an automated tool/rule can flag candidates · 👁 = needs human 
       Roots/Stalk/voting-power from current storage vs a snapshot block.
       *Beanstalk: $181M — flash-loaned $1B in LP → deposited for Roots → supermajority
       vote → emergency commit → drain, all in one tx.*
+      **semgrep:** `governance-voting-power-no-snapshot` (tools/semgrep/governance-snapshot.yaml)
 - [ ] 👁 **SC02-GOV-2:** Is there a **minimum delay** between proposal submission and
       execution that exceeds the time needed for tokenholders to detect and react (e.g.,
       7 days, not 1 day)? Can the delay be bypassed via `emergencyCommit` or fast-track?
@@ -54,6 +55,7 @@ Legend: 🤖 = an automated tool/rule can flag candidates · 👁 = needs human 
       Check for `public` visibility on setter functions for `mapping(address => bool)`
       patterns. *TrustedVolumes: $6.7M — `setAuthorizedSigner` was public with no modifier,
       attacker added self to whitelist, forged trade orders.*
+      **semgrep:** `public-setter-without-access-control` (tools/semgrep/public-setter.yaml)
 - [ ] **SC02-BRIDGE:** For bridge contracts: Is cross-chain message verification based on
       a well-audited Merkle library (e.g., OpenZeppelin MerpleProof)? Are roots validated
       against signed validator attestations, not just computed values? Is there a fallback
@@ -62,6 +64,26 @@ Legend: 🤖 = an automated tool/rule can flag candidates · 👁 = needs human 
 - [ ] **SC02-LEGACY:** Are deprecated/legacy contracts still accessible on-chain? Even if
       the frontend disables them, can they be called directly? *Transit Finance: $1.88M —
       deprecated TRON contract from 2022 with known vulnerabilities still callable.*
+- [ ] 🤖 **SC02-BRIDGE-TON-1:** For TON bridge contracts: does the inbound message
+      validation verify BOTH (a) the sender jetton wallet's code hash against the canonical
+      code AND (b) the wallet's minter field against the expected jetton master for the
+      claimed asset? Code-hash-only verification allows contracts with canonical code but
+      attacker-controlled minters to impersonate legitimate jetton wallets.
+      *TAC Bridge: $2.85M — sequencer checked code hash but not minter provenance,
+      allowing jetton wallet impersonation and 302M fake BLUM minted in 5 txs.*
+- [ ] 👁 **SC02-BRIDGE-PROV-1:** For any cross-chain bridge: does the inbound verification
+      check the **full provenance chain** of the sender (code + context binding), or only
+      superficial properties (code hash, interface)? Incomplete provenance checks allow
+      look-alike contracts to impersonate legitimate senders. On TON: code hash + minter.
+      On EVM: bytecode + storage layout. On Solana: ownership + account data chain.
+      *TAC Bridge: $2.85M — code-hash-only verification bypassed by deploying a contract
+      with canonical code but attacker-controlled minter.*
+- [ ] 🤖 **SC02-MONITOR-1:** Does the bridge implement per-minter/per-source **rate limits**
+      and **supply invariants** as second-line defense? Even with correct verification,
+      anomalous mint volumes (per minter, per source wallet, per unit time) should trigger
+      automated circuit breakers. *TAC Bridge: 302M BLUM minted in 5 txs — rate-based
+      monitoring would have surfaced immediately. Post-mortem: "possibly more important
+      than audits."*
 - [ ] 👁 **SC02-SOLVER-1:** Does the contract use an **iterative solver** (Newton-Raphson,
       binary search, fixed-point iteration) to compute a critical invariant (supply, price,
       rate)? If so: (a) are domain preconditions (e.g., `A·Σ ≥ D·Π`) explicitly checked

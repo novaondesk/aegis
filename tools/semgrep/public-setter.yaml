@@ -1,0 +1,82 @@
+rules:
+  - id: public-setter-without-access-control
+    languages: [solidity]
+    severity: WARNING
+    message: >
+      Public/external function modifies an access-control mapping
+      (signer/whitelist/admin/authority) without an access-control modifier
+      (onlyOwner, onlyAdmin, onlyRole, require(msg.sender == owner), etc.).
+      Anyone can call this to escalate privileges. Checklist SC02.
+      cf. TrustedVolumes $6.7M (2026-05-06).
+    metadata:
+      cwe:
+        - "CWE-284: Improper Access Control"
+      owasp-sc: [SC02]
+      references:
+        - https://www.halborn.com/blog/post/explained-the-trustedvolumes-hack-may-2026
+      exploit-id: trustedvolumes-access-control
+    pattern-either:
+      # setAuthorizedSigner — the TrustedVolumes original
+      - pattern: |
+          function setAuthorizedSigner(address $ADDR, bool $VAL) public {
+            ...
+          }
+      - pattern: |
+          function setAuthorizedSigner(address $ADDR, bool $VAL) external {
+            ...
+          }
+      # Generic "set*" public/external with a mapping write and no modifier
+      - pattern: |
+          function setSigner(...) public {
+            ...
+          }
+      - pattern: |
+          function setSigner(...) external {
+            ...
+          }
+      - pattern: |
+          function setWhitelist(...) public {
+            ...
+          }
+      - pattern: |
+          function setWhitelist(...) external {
+            ...
+          }
+      - pattern: |
+          function setAdmin(...) public {
+            ...
+          }
+      - pattern: |
+          function setAdmin(...) external {
+            ...
+          }
+      - pattern: |
+          function setOperator(...) public {
+            ...
+          }
+      - pattern: |
+          function setOperator(...) external {
+            ...
+          }
+      - pattern: |
+          function setAuthority(...) public {
+            ...
+          }
+      - pattern: |
+          function setAuthority(...) external {
+            ...
+          }
+      # Broader catch: any set* function that writes to a mapping without
+      # common access-control modifiers in its signature
+      - pattern: |
+          function $SETTER(...) public {
+            ...
+            $MAPPING[$KEY] = $VAL;
+            ...
+          }
+      - pattern: |
+          function $SETTER(...) external {
+            ...
+            $MAPPING[$KEY] = $VAL;
+            ...
+          }

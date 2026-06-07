@@ -1,0 +1,75 @@
+rules:
+  - id: governance-voting-power-no-snapshot
+    languages: [solidity]
+    severity: WARNING
+    message: >
+      Governance function reads voting power from live state (balanceOf,
+      getVotes, totalRoots, totalSupply, votingBalance) at execution time
+      rather than from a snapshot taken at proposal creation.  Flash-loan
+      attacks can borrow tokens → vote → repay in a single atomic tx.
+      Checklist SC04. cf. Beanstalk $181M (2022-04-17).
+    metadata:
+      cwe:
+        - "CWE-284: Improper Access Control"
+      owasp-sc: [SC04]
+      references:
+        - https://rekt.news/beanstalk-rekt/
+      exploit-id: beanstalk-governance-flashloan
+    pattern-either:
+      # vote / castVote reading live balanceOf
+      - pattern: |
+          function vote(...) ... {
+            ...
+            $TOKEN.balanceOf(...);
+            ...
+          }
+      - pattern: |
+          function castVote(...) ... {
+            ...
+            $TOKEN.balanceOf(...);
+            ...
+          }
+      # vote / castVote reading live getVotes / getPastVotes that actually
+      # hits current block (getPastVotes with block.number == current)
+      - pattern: |
+          function vote(...) ... {
+            ...
+            $TOKEN.getVotes(...);
+            ...
+          }
+      - pattern: |
+          function castVote(...) ... {
+            ...
+            $TOKEN.getVotes(...);
+            ...
+          }
+      # Beanstalk-style: getRoots / totalRoots computed from live deposits
+      - pattern: |
+          function $VOTE(...) ... {
+            ...
+            totalRoots(...);
+            ...
+          }
+      # emergencyCommit / executeProposal reading live voting totals
+      - pattern: |
+          function emergencyCommit(...) ... {
+            ...
+            $TOKEN.balanceOf(...);
+            ...
+          }
+      - pattern: |
+          function $EXECUTE(...) ... {
+            ...
+            $VOTING_BALANCE += $TOKEN.balanceOf(...);
+            ...
+          }
+      # Generic: governance function reads voting token totalSupply at
+      # execution time (no snapshot), used for quorum checks
+      - pattern: |
+          function $GOV_FN(...) ... {
+            ...
+            $TOKEN.totalSupply();
+            ...
+            $VOTE_COUNT;
+            ...
+          }
