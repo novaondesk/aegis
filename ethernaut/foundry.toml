@@ -16,3 +16,16 @@ evm_version = "paris"
 optimizer = true
 optimizer_runs = 200
 via_ir = true
+
+# Prague profile — for the Cashback level (Solidity 0.8.30 `layout at`, transient
+# storage, EIP-7702 via vm.signAndAttachDelegation). Default stays paris for the
+# old SELFDESTRUCT levels. Run: FOUNDRY_PROFILE=prague forge test --match-contract Cashback
+[profile.prague]
+src = "src"
+test = "test"
+libs = ["../poc/lib"]
+auto_detect_solc = true
+evm_version = "prague"
+optimizer = true
+optimizer_runs = 200
+via_ir = true
