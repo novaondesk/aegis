@@ -25,6 +25,8 @@ target easier to audit — ideally by adding/sharpening a catalog detector.
    `docs/exploits/`, a **detector entry in `catalog/exploits.yaml`** (with checkable
    `applies_when` preconditions), a sharpened item in `checklists/master-checklist.md`,
    and a detection artifact (semgrep rule and/or invariant template). This is the loop.
+   To *source* new exploits (where to look + how to convert a hack into a detector + PoC),
+   see [`RESEARCH.md`](RESEARCH.md).
 5. **Don't break the build.** `cd poc && forge build` must pass. PoC tests must pass
    (or be clearly marked `skip` with a reason).
 
