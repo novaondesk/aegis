@@ -242,6 +242,13 @@ Legend: 🤖 = an automated tool/rule can flag candidates · 👁 = needs human 
 ## SC09 — Overflow/Underflow 🤖
 - [ ] Solidity <0.8 without SafeMath anywhere? `unchecked{}` blocks audited by hand?
       *Poolz: overflow in GetArraySum(), $390K.*
+- [ ] **SC09-PACKED-1:** Does the contract use bit-packed storage for ownership or balance tracking
+      (ERC-404, BT404, DN404, or custom packed encoding)? If yes, verify that ALL read paths
+      (ownerOf, balanceOf, _update, _transfer) use identical bit masks and shift constants.
+      Inconsistency between read paths creates "ghost ownership" — one path says you own it,
+      the accounting system disagrees. An unchecked packed arithmetic operation then underflows,
+      inflating balances to astronomical levels.
+      *Flooring Protocol: $500K+ in NFTs drained, 2026-06-08. BitmapPunks: same BT404 class, same day.*
 
 ## DoS / griefing 👁
 - [ ] Unbounded loops over user-growable arrays? Push-payment that one revert can brick?
