@@ -39,6 +39,34 @@ Each item is a yes/no question + the code smell + a real exploit that maps to it
   especially dangerous during high volatility or oracle downtime.
 - **Fix:** `require!(now - price.publish_time < MAX_STALENESS_SECS, ErrorCode::StaleOracle)`
 - **Severity:** HIGH
+
+### SOL-ORACLE-4 — Oracle accepts collateral without minimum liquidity validation? 🤖
+- **Code smell:** Oracle evaluates collateral price from a DEX pool without checking underlying pool liquidity depth, number of unique traders, or time-weighted volume
+- **Why it matters:** A token with trivial seed liquidity ($500) can be wash-traded to any target price. Price without liquidity is a fiction — it represents what someone *could* get if there were a counterparty, not what the market actually supports. An oracle that validates price but not depth allows an attacker to manufacture collateral from nothing.
+- **Real exploit:** Drift Protocol (April 2026, $285M) — CarbonVote Token (CVT) deployed with ~$500 in seed liquidity on Raydium, wash-traded to ~$1, accepted as collateral by Switchboard oracle. Attacker deposited hundreds of millions in worthless CVT and withdrew real assets.
+- **Fix:** Enforce minimum liquidity threshold (e.g., $1M+ pool depth) and minimum number of unique traders before listing any token as collateral. Validate liquidity on-chain, not just price.
+- **Severity:** CRITICAL — direct theft of user funds via manufactured collateral.
+- **Bounty context:** $100K–$500K on typical Immunefi critical tier for perps/lending protocols.
+
+---
+
+## Governance & Timelock 🤖👁
+
+### SOL-GOVERNANCE-1 — Security Council / admin has zero timelock on privileged actions?
+- **Code smell:** `timelock: 0` on Security Council configuration, or no timelock on governance actions that can list collateral, change withdrawal limits, or modify protocol parameters
+- **Why it matters:** Timelocks exist to give the community and security teams time to detect and block malicious governance transactions. Zero timelock = zero detection window. When combined with compromised multisig signers, pre-signed malicious transactions execute instantly with no opportunity to intervene.
+- **Real exploit:** Drift Protocol (April 2026, $285M) — Security Council migrated to 2-of-5 with zero timelock on March 27, 5 days before the exploit. The migration itself was approved through the already-compromised multisig.
+- **Fix:** Minimum 48-hour timelock on all privileged governance actions. Timelock reduction should itself be timelocked at the original duration.
+- **Severity:** CRITICAL
+- **Bounty context:** Governance architecture flaws increasingly covered under Immunefi's "logical vulnerabilities" tier.
+
+### SOL-GOVERNANCE-2 — Multisig threshold too low relative to TVL?
+- **Code smell:** 2-of-N multisig where N < 7, especially for protocols with TVL > $100M
+- **Why it matters:** A 2-of-5 multisig means compromising 2 individuals gives full control of $550M+ in user funds. Social engineering of 2 signers is a realistic attack for state-sponsored actors (DPRK/Lazarus Group).
+- **Real exploit:** Drift Protocol (April 2026, $285M) — 2-of-5 multisig, social engineering of 2 signers gave full control. Attacker pre-signed malicious transactions via Solana durable nonces.
+- **Fix:** Higher thresholds (4-of-7+) with geographically distributed signers, hardware key requirements, and transaction simulation before signing. Consider separating signing authority by function (e.g., collateral listing vs. withdrawal limits).
+- **Severity:** HIGH
+
 ### Account Confusion / Type Cosplay
 - [ ] Is there a discriminator check to prevent one account type being misinterpreted as another?
   - **Code smell:** Raw `AccountInfo` deserialization without type verification

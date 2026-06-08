@@ -40,6 +40,17 @@ Legend: 🤖 = an automated tool/rule can flag candidates · 👁 = needs human 
       before asset-affecting changes take effect**, giving users time to exit? Or can
       `cutBip()` / `execute()` drain assets atomically?
       *Beanstalk: `cutBip()` executed immediately via Diamond proxy, no grace period.*
+- [ ] 👁 **SC02-GOV-4:** For protocols using multisig + timelock for admin actions: Is the
+      timelock non-zero? Is the multisig threshold appropriate for TVL secured (not 2-of-N
+      for >$100M TVL)? Can the timelock be reduced without itself being timelocked?
+      *Drift Protocol: $285M, April 2026 — 2-of-5 multisig with zero timelock. Social
+      engineering of 2 signers + durable nonce pre-signing → $285M drained in 12 minutes.
+      Timelock removed 5 days before exploit via the same compromised multisig.*
+- [ ] 👁 **SC02-ORACLE-LIQUID-1:** Does the oracle validate collateral liquidity depth, not
+      just price? A token with $500 in seed liquidity can be wash-traded to any price.
+      Price without liquidity is meaningless for collateral valuation.
+      *Drift Protocol: $285M — CarbonVote Token with $500 liquidity wash-traded to $1,
+      accepted as collateral by Switchboard oracle, used to drain real assets.*
 - [ ] 👁 **SC02-SWAP-1:** For multi-hop swap routes (margin opening, collateral conversion,
       flash loan repayment), is `min_amount_out` validated only on the **terminal output
       token**, or is it accumulated across intermediate hops? Summing intermediate values
@@ -210,7 +221,15 @@ Legend: 🤖 = an automated tool/rule can flag candidates · 👁 = needs human 
 ## SC10 — Proxy & Upgradeability 🤖
 - [ ] Storage layout collision between impl versions? Gap variables present?
 - [ ] `_disableInitializers()` in impl constructor? Uninitialized impl seizable?
-- [ ] Upgrade authority: timelock? multisig? Can a single key rug via upgrade?
+- [ ] 🤖 **SC10-UUPS-1:** Upgrade authority: timelock? multisig? Can a single key rug via upgrade?
+      If UUPS `_authorizeUpgrade()` is gated by a single EOA without timelock, compromising that key
+      replaces ALL contract logic atomically. *Wasabi Protocol: $5.5M, April 2026 — single deployer
+      key compromised, vault contracts replaced with drainers across 4 chains. Audited by Zellic + Sherlock.*
+      **Fix:** Gate UUPS upgrades behind TimelockController (48h+) + multisig (3-of-5+).
+- [ ] **SC10-UUPS-2:** Emergency pause mechanism exists with separate authority from upgrade role?
+      Without PausableUpgradeable + separate GUARDIAN_ROLE, an upgrade + drain is atomic with no
+      intervention window. *Wasabi Protocol: $5.5M — no pause, exploit executed across 4 chains
+      before any response.*
 - [ ] `delegatecall` to untrusted/user-controlled target?
 - [ ] 👁 **SC-storage-layout-02:** Does the contract use Solady (or other library) with a fixed
       pseudo-random storage slot (e.g. `_REENTRANCY_GUARD_SLOT`)? Do any attacker-influenceable
