@@ -33,6 +33,16 @@ is in scope.
 | X01 | **Cross-chain / bridge trust config** | Single-DVN / single-verifier messaging = single point of failure | Kelp DAO rsETH, $292M (Apr 2026) |
 | X02 | **Governance social engineering** | Off-chain compromise of signers/operators (DPRK-style) | Drift Protocol, $285M (Apr 2026) |
 | X03 | **Supply-chain / signing infra** | Compromised frontend/signing pipeline, not the contract | Bybit, ~$1.4B (2025) |
+| X04 | **Threshold-signature / key-gen protocol flaw** | Malicious co-signer exploits a TSS/DKG soundness gap to extract the shared key | THORChain TSS GG20, $10.8M (May 2026) |
+| X05 | **Legacy / deprecated contract surface** | "Deprecated" contracts stay callable forever and users' standing approvals persist | Transit Finance legacy bridge, $1.88M (May 2026) |
+
+### Named sub-classes
+
+Some detectors are a sharp, named refinement of a base class rather than a whole new one:
+
+| ID | Class | One-liner | Example |
+|----|-------|-----------|---------|
+| SC-storage-layout | **Storage-slot collision** (refines SC01) | A computed mapping/array slot collides with a library- or proxy-reserved fixed slot, so an unrelated write corrupts it | ATO Hook: mapping key collides with Solady `_REENTRANCY_GUARD_SLOT` |
 
 ## How we use this
 

@@ -33,9 +33,9 @@ target source ──► for each catalog entry:
 |---|---|
 | `id` | kebab-case unique id (matches `docs/exploits/<id>*.md` where possible) |
 | `name` | human title |
-| `status` | `coded` (runnable PoC exists) or `studied` (deep-dive doc only) |
+| `status` | `coded` (runnable PoC), `studied` (full detector, PoC pending), or `documented` (case study only). Lifecycle: documented → studied → coded. `studied`/`coded` additionally require `root_cause` + `variant_queries` + `detection`. |
 | `class` | OWASP SC Top-10 2026 ids + X-classes (see [`../docs/vuln-classes/`](../docs/vuln-classes/)) |
-| `chains` | `evm` \| `solana` \| `sui-move` \| `aptos-move` \| `cosmwasm` \| `multi` |
+| `chains` | `evm` \| `solana` \| `sui-move` \| `aptos-move` \| `cosmwasm` \| `near` \| `ton` \| `tron` \| `polkadot` \| `multi` |
 | `archetypes` | target shapes it applies to — used to scope the sweep quickly |
 | `loss_usd` / `date` | headline loss & incident date (or `recurring` for a class) |
 | `summary` | one paragraph: what the attacker did and why it worked |
@@ -49,6 +49,14 @@ target source ──► for each catalog entry:
 | `fork_poc` | *(optional)* external mainnet-fork replay of the real incident (e.g. a DeFiHackLabs path) — realism backing for the minimal model |
 | `checklist` / `semgrep` | relevant `checklists/master-checklist.md` class ids and `tools/semgrep` rule ids |
 | `sources` | primary references |
+
+## Versioning
+
+The top-level `version:` field is the **schema version** — it tracks the *shape* of an
+entry (the fields above), not the repo release or the entry count. It bumps only when the
+schema changes in a backward-incompatible way (a renamed/removed field, a new required
+field). It is deliberately decoupled from the repo's `vX.Y.Z` release tags, which move
+every time entries are added. `tools/validate_catalog.py` enforces the current schema.
 
 ## How the sweep ranks a match
 

@@ -178,6 +178,7 @@ LLMs talk themselves out of real findings. Reject these:
 | "Admin is trusted, ignore it" | Model admin compromise and excessive powers; rugpull-by-design is a finding. |
 | "Small rounding / dust, not worth it" | Precision leaks compound (see Balancer); dust is the *exploit*, not noise. |
 | "Can't write a PoC, but I'm sure" | Then it isn't a finding yet. No PoC, no claim. |
+| "The EVM-model PoC passed, so the Solana/Move target is vulnerable" | An EVM model proves the *class*, not the target. Label it illustrative; a native repro is what confirms it (see `references/finding-format.md`). |
 
 ## Reference index
 | File | Use |

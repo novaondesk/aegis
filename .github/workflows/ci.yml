@@ -1,0 +1,63 @@
+name: CI
+
+# "No finding without a runnable PoC" — so the repo holds itself to the same bar:
+# every status:coded entry's PoC must compile and pass, and the catalog/README must
+# stay consistent on every push.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  catalog:
+    name: catalog + README validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pyyaml
+      - name: Catalog is parseable
+        run: python3 -c "import yaml; yaml.safe_load(open('catalog/exploits.yaml'))"
+      - name: Catalog schema + path + cross-reference validation
+        run: python3 tools/validate_catalog.py
+      - name: README catalog table/counts are in sync with the catalog
+        run: python3 tools/gen_catalog_table.py --check
+      - name: Semgrep rule files parse
+        run: |
+          for f in tools/semgrep/*.y*ml; do
+            python3 -c "import yaml,sys; yaml.safe_load(open(sys.argv[1]))" "$f"
+          done
+
+  poc:
+    name: poc/ Foundry PoCs (vulnerable + safe)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: foundry-rs/foundry-toolchain@v1
+      - name: forge test (every status:coded detector)
+        working-directory: poc
+        run: forge test -vv
+
+  ethernaut:
+    name: ethernaut/ wargame (40/40)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: foundry-rs/foundry-toolchain@v1
+      - name: forge test (paris profile — 39 levels)
+        working-directory: ethernaut
+        run: forge test -vv
+      - name: forge test (prague profile — Cashback / EIP-7702)
+        working-directory: ethernaut
+        run: FOUNDRY_PROFILE=prague forge test --match-contract Cashback -vv
+
+  # sim/ (mainnet-fork incident replays) needs a real RPC and is intentionally not
+  # gated here — run it locally with sim/.env (see sim/README.md). dvd/ depends on the
+  # external Damn Vulnerable DeFi repo and is likewise out of CI scope.

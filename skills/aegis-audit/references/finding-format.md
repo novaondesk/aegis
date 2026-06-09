@@ -49,10 +49,33 @@ Fix (lead with this):
 PoC: poc/test/<X>.t.sol  →  cd poc && forge test --match-contract <X> -vv
   - test_<x>_isExploited   ✓ (attacker profits / invariant breaks)
   - test_<x>_resistsAttack ✓ (fix holds)
+
+PoC fidelity: native | EVM-model | fork
 ```
 
 Tier by severity (see `confidence-scoring.md`): full block for Critical/High; Medium gets
 root cause + ≤3-step exploit; Low/Info is one line.
+
+### PoC fidelity — be honest about what the PoC actually proves
+
+The backing PoC's fidelity must be stated on every finding, because the strength of the
+proof varies and the coverage claim depends on not overstating it:
+
+- **native** — the PoC runs in the target's own language/VM (Foundry for EVM; Anchor for
+  Solana; Move harness for Sui/Aptos). This proves the bug on *this* target's semantics.
+- **fork** — the exploit runs against the real deployed contract on a forked chain
+  (`sim/`). The strongest proof: the live target itself breaks.
+- **EVM-model** — a Solidity reproduction of the *broken invariant* for an incident that
+  happened on a non-EVM chain (Solana/Move/NEAR/TON). It proves the **vulnerability class
+  is real and the invariant breaks**, but it does **not** faithfully reproduce the original
+  bug — Move's modular-shift, Anchor's account-validation, etc. are exactly the semantics
+  that made those exploits possible.
+
+> **Rule:** when you audit a Solana/Move/non-EVM target and the only backing for a hit is
+> an EVM-model catalog PoC, you must label the finding *"illustrative of the class, not a
+> faithful repro on this target — needs a native PoC to confirm."* Never present an
+> EVM-model PoC as proof the bug exists on a non-EVM target. A native Anchor/Move port
+> upgrades the finding from illustrative to proven; flag it as the required follow-up.
 
 ## 3. Report skeleton
 

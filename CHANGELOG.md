@@ -3,6 +3,45 @@
 All notable changes to Aegis are documented here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/); versions follow [SemVer](https://semver.org/).
 
+## [2.7.0] — 2026-06-09
+
+Self-enforcement: the repo now holds itself to its own "prove it" bar. Acting on an external
+review of the published repo.
+
+### Added
+- **CI** (`.github/workflows/ci.yml`) on every push/PR + a status badge in the README. Three jobs:
+  catalog validation, the full `poc/` PoC suite (78 tests), and the Ethernaut wargame (40/40).
+  `sim/` (mainnet-fork replays, needs RPC) and `dvd/` (external repo) are intentionally out of CI scope.
+- **`tools/validate_catalog.py`** — enforces the catalog schema as a contract: required fields,
+  `status: coded` ⇔ `poc`/`poc_cmd` set + file exists (and the inverse for `studied`), `doc`/`fork_poc`
+  repo paths resolve, and `class`/`checklist`/`semgrep` ids resolve to their source files.
+- **`tools/gen_catalog_table.py`** — generates the README catalog table + counts from
+  `exploits.yaml` (single source of truth); `--check` fails CI on drift. README counts are no longer
+  hand-maintained.
+- **`LICENSE`** (MIT) at the repo root, matching the skills' declared license.
+- **PoC fidelity discipline** in `aegis-audit`: findings backed only by an EVM-model PoC for a
+  non-EVM target must be labelled *illustrative of the class, not a faithful repro* — a native
+  Anchor/Move port is the follow-up that upgrades them to proven (`references/finding-format.md`).
+- Generic skill-loading instructions (Claude Code / Hermes / other runtimes) in the README.
+- New taxonomy classes **X04** (threshold-signature / key-gen protocol flaw) and **X05**
+  (legacy / deprecated contract surface) in `docs/vuln-classes/`, backing the THORChain and
+  Transit Finance entries.
+
+### Fixed
+- Validation surfaced and closed real catalog gaps: `tools/semgrep/solidity-patterns.yml` was
+  empty (25 referenced rule ids had no rule) — restored + extended to cover every referenced id;
+  missing `summary`/`root_cause`/`variant_queries` on five entries; two `studied` entries carried
+  `poc: n/a` (now `null`); non-vocabulary chain ids (`ethereum`/`multi-chain`) normalised.
+- `ethernaut/` builds and tests clean on a fresh checkout: restored the dropped
+  `openzeppelin-contracts-06` remapping (the full suite had been uncompilable since the oz06 move),
+  added per-profile `skip` lists, and made the CoinFlip PoC robust to Foundry 1.7.x `blockhash`
+  semantics. 40/40 green from a cold cache.
+- Reconciled the validator with the freshly-merged Drift/Wasabi/Zeta/ATOHook entries (catalog
+  36 → 40): formalised `documented` as the third lifecycle status (case study only; detector
+  fields not yet required), taught the validator to read the per-ecosystem checklists (Solana,
+  Solodit, L2) not just the master, added the 3 ZetaChain semgrep rules + the `SC-storage-layout`
+  sub-class, and normalised the Wasabi multi-chain `chains` list. poc suite now 78 green.
+
 ## [2.5.0] — 2026-06-04
 
 Merged Nova's PR #10 (research-rolling).

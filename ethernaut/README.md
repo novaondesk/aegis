@@ -1,13 +1,13 @@
 # ethernaut/ — Aegis vs. the Ethernaut wargame
 
-Aegis solves **37 of the 40 levels** of OpenZeppelin's [Ethernaut](https://ethernaut.openzeppelin.com/)
+Aegis solves **all 40 levels** of OpenZeppelin's [Ethernaut](https://ethernaut.openzeppelin.com/)
 CTF using only its [catalog](../catalog/exploits.yaml) + [`aegis-audit`](../skills/aegis-audit/SKILL.md)
 loop: RECON the level → SWEEP the catalog → PROVE by exploiting the real level contract and asserting
 the level's win condition. Each level is deployed and exploited locally in Foundry.
 
-> Upstream Ethernaut grew past the classic 31 — there are now **40 playable levels**. All 9 newer ones
-> are evaluated (catalog sweep) in [the report](../docs/ethernaut-wargame.md#the-newer-levels-3240);
-> 6 are solved in-harness here (Impersonator, ImpersonatorTwo, Forger, BetHouse, MagicAnimalCarousel, UniqueNFT).
+> Upstream Ethernaut grew past the classic 31 — there are now **40 playable levels**, all solved
+> in-harness here. The newer ones are also evaluated against the catalog in
+> [the report](../docs/ethernaut-wargame.md#the-newer-levels-3240).
 
 **Full write-up** (which detector caught each level + the catalog gaps it surfaced):
 [`docs/ethernaut-wargame.md`](../docs/ethernaut-wargame.md).
@@ -15,11 +15,15 @@ the level's win condition. Each level is deployed and exploited locally in Found
 ## Run
 ```bash
 cd ethernaut
-forge test -vv     # 36 levels, all passing
+forge test -vv                                              # 39 levels (paris profile)
+FOUNDRY_PROFILE=prague forge test --match-contract Cashback # Cashback (EIP-7702, Cancun/Prague)
 ```
+The split is only about EVM version: Cashback needs Cancun/Prague (transient storage, EIP-7702)
+while the classic SELFDESTRUCT levels need paris. Each profile's `skip` list excludes the other's
+incompatible-pragma sources. Both are run in CI.
 
 ## Coverage
-**37 / 40** levels (`test/<Level>.t.sol`). Fifteen are caught by an exact catalog detector — the same
+**40 / 40** levels (`test/<Level>.t.sol`). Fifteen are caught by an exact catalog detector — the same
 ones that fire on mainnet hacks:
 
 | Catalog detector | Levels |
@@ -34,9 +38,9 @@ ones that fire on mainnet hacks:
 
 The rest are solved with general techniques (forced-ether, DoS, info-exposure, integer/storage
 underflow, tx.origin, calldata, untrusted-interface, bit-encoding/packing) — an honest to-do list of
-detector classes the catalog should grow into. The **3 deferred** newer levels (Cashback → EIP-7702;
-NotOptimisticPortal → Optimism stack; EllipticToken → deeper puzzle) are evaluated + sketched in the
-report.
+detector classes the catalog should grow into. The hardest newer levels (Cashback → EIP-7702;
+NotOptimisticPortal → Optimism selector-collision + forged L2 proof; EllipticToken → raw-ECDSA
+forgery) are now solved in-harness; the catalog gaps each surfaced are tracked in the report.
 
 Level sources under `src/levels/` are vendored verbatim from `github.com/OpenZeppelin/ethernaut`
 (MIT); `src/vendor/` + `src/helpers/` hold minimal OZ shims so they compile standalone (the newer

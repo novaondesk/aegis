@@ -16,6 +16,14 @@ evm_version = "paris"
 optimizer = true
 optimizer_runs = 200
 via_ir = true
+# Cashback needs Cancun/Prague features (oz54 transient storage) — run it under
+# the prague profile below; everything else runs here.
+skip = [
+    "src/levels/Cashback.sol",
+    "src/levels/CashbackFactory.sol",
+    "test/Cashback.t.sol",
+    "src/vendor/oz/oz/**",
+]
 
 # Prague profile — for the Cashback level (Solidity 0.8.30 `layout at`, transient
 # storage, EIP-7702 via vm.signAndAttachDelegation). Default stays paris for the
@@ -29,3 +37,20 @@ evm_version = "prague"
 optimizer = true
 optimizer_runs = 200
 via_ir = true
+# old solc (0.5/0.6) binaries reject evm_version=prague — skip the legacy levels here
+skip = [
+    "src/levels/AlienCodex.sol",
+    "src/levels/Fallout.sol",
+    "src/levels/Token.sol",
+    "src/levels/Reentrance.sol",
+    "src/levels/Motorbike.sol",
+    "src/levels/HigherOrder.sol",
+    "src/helpers/Ownable-05.sol",
+    "src/vendor/oz06/**",
+    "test/AlienCodex.t.sol",
+    "test/Fallout.t.sol",
+    "test/Token.t.sol",
+    "test/Reentrance.t.sol",
+    "test/Motorbike.t.sol",
+    "test/HigherOrder.t.sol",
+]

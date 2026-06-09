@@ -2,6 +2,8 @@
 
 **Exploit-catalog-driven smart contract security auditing.**
 
+[![CI](https://github.com/novaondesk/aegis/actions/workflows/ci.yml/badge.svg)](https://github.com/novaondesk/aegis/actions/workflows/ci.yml)
+
 > 📖 **Docs site:** https://novaondesk.github.io/aegis/ ·
 > 🏴 **Wargames (catalog-driven):** [Ethernaut 40/40](docs/ethernaut-wargame.md) · [Damn Vulnerable DeFi 18/18](docs/dvd-wargame.md)
 
@@ -49,31 +51,57 @@ statement, the `variant_queries` grep-family that hunts the bug across a target,
 `invariant` that breaks, and links to the deep-dive case study, the runnable PoC, and
 (where one exists) a DeFiHackLabs mainnet-fork replay (`fork_poc`).
 
-| Exploit | Class | Chain | Status |
-|---|---|---|---|
-| ERC-4626 share-inflation | SC07/SC02 | EVM | ✅ coded PoC |
-| Read-only reentrancy (Curve class) | SC08 | EVM | ✅ coded PoC |
-| Balancer V2 rounding ($128M) | SC07 | EVM (6 chains) | ✅ coded PoC |
-| Cashio infinite-mint ($52.8M) | SC05/SC02 | Solana (EVM model) | ✅ coded PoC |
-| Cetus CLMM overflow ($223M) | SC07/SC09 | Sui/Move (EVM model) | ✅ coded PoC |
-| Loopscale spot-price oracle ($5.8M) | SC03/SC02 | Solana (EVM model) | ✅ coded PoC |
-| Loopscale unvalidated CPI ($5.8M) | SC03/SC05 | Solana (EVM model) | ✅ coded PoC |
-| Mango oracle manipulation ($114M) | SC03/SC02 | Solana (EVM model) | ✅ coded PoC |
-| Beanstalk governance flash-loan ($181M) | SC02/SC04 | EVM | ✅ coded PoC |
-| Rhea Finance multi-hop slippage ($18.4M) | SC02/SC07 | NEAR (EVM model) | ✅ coded PoC |
-| cToken empty-market exchange-rate inflation (~$7M+) | SC07/SC02 | EVM | ✅ coded PoC |
-| Router arbitrary-call approval drain (Socket/Seneca) | SC05/SC01 | EVM | ✅ coded PoC |
-| Upgradeable-proxy storage-slot collision ($6M) | SC01 | EVM | ✅ coded PoC |
-| Signature replay + ecrecover malleability | SC01 | EVM | ✅ coded PoC |
-| Missing access control on a privileged fn (PAID) | SC01 | EVM | ✅ coded PoC |
-| Predictable on-chain randomness | SC09 | EVM | ✅ coded PoC |
-| Fee-on-transfer / weird-ERC20 accounting | SC02 | EVM | ✅ coded PoC |
-| MasterChef reward-debt desync (double-claim) | SC02 | EVM | ✅ coded PoC |
-| Unverified flash-loan / external callback | SC05/SC01 | EVM | ✅ coded PoC |
-| Bridge credits a no-code-token deposit (Qubit $80M) | SC02 | EVM | ✅ coded PoC |
-| AMM-pair first-deposit / share-skim | SC07 | EVM | ✅ coded PoC |
-| ECDSA nonce-reuse key extraction | SC01 | EVM | ✅ coded PoC |
-| TAC Bridge jetton code-hash impersonation ($2.85M) | SC02 | TON (EVM model) | ✅ coded PoC |
+The table and counts below are **generated from `exploits.yaml`**
+(`python3 tools/gen_catalog_table.py`); CI fails if they drift.
+
+<!-- BEGIN GENERATED: catalog-counts -->
+**40 detectors — 33 with runnable PoCs (CI-enforced), 5 studied (PoC pending), 2 documented (case study).**
+<!-- END GENERATED: catalog-counts -->
+
+<!-- BEGIN GENERATED: catalog-table -->
+| Exploit | Class | Chain | Loss | Status |
+|---|---|---|---|---|
+| ERC-4626 First-Depositor / Share-Inflation | SC07/SC02 | EVM | recurring | ✅ coded PoC |
+| Read-Only Reentrancy (Curve get_virtual_price class) | SC08 | EVM | recurring | ✅ coded PoC |
+| Balancer V2 ComposableStablePool — Rounding Inconsistency | SC07 | EVM/multi | $128M | ✅ coded PoC |
+| Cashio App — Infinite Mint via Missing Account Validation | SC05/SC02 | Solana *(EVM model)* | $52.8M | ✅ coded PoC |
+| Cetus CLMM — Flawed Overflow Check (checked_shlw) | SC07/SC09 | Sui/Move *(EVM model)* | $223M | ✅ coded PoC |
+| Loopscale — Single Spot-Price Collateral Valuation | SC03/SC02 | Solana *(EVM model)* | $5.8M | ✅ coded PoC |
+| Loopscale — Unvalidated CPI Target (spoofed RateX program) | SC03/SC02/SC05 | Solana *(EVM model)* | $5.8M | ✅ coded PoC |
+| Mango Markets — Low-Liquidity Collateral Oracle Manipulation | SC03/SC02 | Solana *(EVM model)* | $114M | ✅ coded PoC |
+| Beanstalk Governance Flash-Loan Attack | SC02/SC04 | EVM | $181M | ✅ coded PoC |
+| Rhea Finance multi-hop swap route slippage inflation | SC02/SC07 | NEAR/multi *(EVM model)* | $18.4M | ✅ coded PoC |
+| TrustedVolumes — Public Setter on Access Control Mapping | SC02 | EVM | $6.7M | ✅ coded PoC |
+| Verus Bridge — Forged Merkle Proof Cross-Chain Withdrawal | SC02 | EVM/multi | $11.6M | ✅ coded PoC |
+| THORChain TSS/GG20 Key Extraction via Malformed Paillier Modulus | X04 | multi | $10.8M | 📚 studied |
+| Ekubo — Flash-Accounting Callback Calldata Injection / Standing Approval Drain | SC02/SC02-CB | EVM | $1.4M | 📚 studied |
+| Kelp DAO — LayerZero Single-DVN Bridge Drain | X01/X01-BRIDGE | EVM/multi | $292M | ✅ coded PoC |
+| Compound-fork cToken empty-market exchange-rate inflation | SC07/SC02 | EVM | recurring | ✅ coded PoC |
+| Router arbitrary-external-call approval drain | SC05/SC01 | EVM | recurring | ✅ coded PoC |
+| Upgradeable-proxy storage-slot collision | SC01 | EVM | $6M | ✅ coded PoC |
+| Signature replay + ecrecover malleability | SC01 | EVM | recurring | ✅ coded PoC |
+| Missing access control on a privileged function | SC01 | EVM | recurring | ✅ coded PoC |
+| Predictable on-chain randomness | SC09 | EVM | recurring | ✅ coded PoC |
+| Fee-on-transfer / weird-ERC20 accounting (received != requested) | SC02 | EVM | recurring | ✅ coded PoC |
+| MasterChef-style reward-debt desync (double-claim) | SC02 | EVM | recurring | ✅ coded PoC |
+| Unverified flash-loan / external callback | SC05/SC01 | EVM | recurring | ✅ coded PoC |
+| Bridge credits a no-code-token deposit | SC02 | EVM | $80M | ✅ coded PoC |
+| AMM-pair first-deposit / share-skim manipulation | SC07 | EVM | recurring | ✅ coded PoC |
+| State-changing checks-effects-interactions reentrancy | SC08 | EVM | recurring | ✅ coded PoC |
+| Meta-transaction _msgSender() spoofing (ERC-2771 forwarder trust) | SC01 | EVM | recurring | ✅ coded PoC |
+| Calldata / ABI smuggling (validate one byte range, execute another) | SC05/SC01 | EVM | recurring | ✅ coded PoC |
+| Forced-ether balance assumption (selfdestruct / pre-funding breaks balance logic) | SC02 | EVM | recurring | ✅ coded PoC |
+| DoS via reverting recipient / push-payment + unbounded-loop griefing | SC10/SC02 | EVM | recurring | ✅ coded PoC |
+| Yearn yETH Solver Divergence + Underflow Infinite Mint | SC07/SC02 | EVM | $9M | 📚 studied |
+| Transit Finance — Legacy Contract + Standing Approval Drain | SC02/SC02-LEGACY/X05 | TRON/EVM | $1.88M | 📚 studied |
+| Hyperbridge — MMR Out-of-Bounds Leaf Verification Bypass | SC02/SC02-BRIDGE | EVM/Polkadot | $237k | 📚 studied |
+| ECDSA nonce (k) reuse → private-key extraction | SC01 | EVM | recurring | ✅ coded PoC |
+| TAC Bridge — Jetton Wallet Code-Hash Verification Bypass | SC02 | TON/EVM *(EVM model)* | $2.85M | ✅ coded PoC |
+| ZetaChain GatewayEVM — Three-Defect Cross-Chain Approval Drain | SC02/SC05/SC01 | EVM/multi | $334k | ✅ coded PoC |
+| ATOHook — Solady ReentrancyGuard Storage Slot Collision | SC-storage-layout | EVM | $14.41M | ✅ coded PoC |
+| Drift Protocol — Oracle Accepts Fabricated Token as Collateral (No Liquidity Validation) | SC03/X02/X03 | Solana | $285M | 📝 documented |
+| Wasabi Protocol — UUPS Proxy Upgrade via Compromised Single-Owner Admin Key | X03 | EVM/multi | $5.5M | 📝 documented |
+<!-- END GENERATED: catalog-table -->
 
 `coded` = runnable PoC in [`poc/`](poc/). *(EVM model)* = the incident was on a non-EVM
 chain (Solana/Move/NEAR) and the PoC reproduces the same broken invariant in Solidity, so
@@ -87,10 +115,18 @@ Aegis ships as two composable [Agent Skills](skills/):
 - **[`aegis-defender`](skills/aegis-defender/SKILL.md)** (blue team) — turns findings into
   fixes **proven by a `Safe<X>` PoC**, plus a deploy/upgrade release-gate.
 
-Register the repo's `skills/` dir in place (so the `../../catalog` links resolve) — e.g.
-symlink it, or add it to Hermes `skills.external_dirs`; see [`skills/`](skills/). Then ask
-to *"audit this contract"* / *"evaluate this target against known exploits"* (audit) or
-*"remediate these findings"* / *"is this safe to deploy?"* (defender).
+Register the repo's `skills/` dir in place (so the `../../catalog` links resolve) — the
+skills work with any agent runtime that discovers `SKILL.md` files:
+
+- **Claude Code:** symlink the skill dirs into your project's `.claude/skills/`
+  (or `~/.claude/skills/` for all projects): `ln -s /path/to/aegis/skills/aegis-audit .claude/skills/`
+- **Hermes:** add `skills/` to `skills.external_dirs` in `~/.hermes/config.yaml`
+- **Other frameworks (Cursor, custom agents):** point the agent at
+  [`skills/aegis-audit/SKILL.md`](skills/aegis-audit/SKILL.md) as a system-prompt include;
+  it is self-contained prose with relative links into the repo.
+
+Then ask to *"audit this contract"* / *"evaluate this target against known exploits"*
+(audit) or *"remediate these findings"* / *"is this safe to deploy?"* (defender).
 
 ## Tooling
 
@@ -137,17 +173,19 @@ detector → log.
 - Every catalog entry documents *why* the pattern matters with a real loss attached —
   no theory-only entries.
 
-## Status — v2.1.0
+## Status — v2.7.0
 
-See [`CHANGELOG.md`](CHANGELOG.md) and [`research-log/`](research-log/).
-- **Catalog:** 36 exploit detectors (31 with runnable model PoCs, 5 studied), machine-readable +
-  agent-driven. v2.0.0 added 11 DeFiHackLabs-mined classes; v2.1.0 added Nova's 5 May-2026 studies
+See [`CHANGELOG.md`](CHANGELOG.md) and [`research-log/`](research-log/). Detector counts
+live in the generated table above — never hand-maintained here.
+- **Catalog:** machine-readable + agent-driven, validated in CI
+  (`tools/validate_catalog.py`). v2.0.0 added 11 DeFiHackLabs-mined classes; v2.1.0 added Nova's 5 May-2026 studies
   (3 coded) and the fork-simulation capability; v2.4.0 added 4 wargame-mined classes (meta-tx spoof,
   ABI smuggling, forced-ether, DoS-griefing); v2.5.0 added `ecdsa-nonce-reuse-key-extraction`
   (on-chain key recovery via the modexp precompile, from Ethernaut ImpersonatorTwo); v2.6.0 added
   `tac-bridge-jetton-impersonation` (code-hash-without-provenance) and **completed the Ethernaut
   wargame — 40/40** (EllipticToken raw-ECDSA forgery, Cashback forged-7702 designator,
-  NotOptimisticPortal selector-collision + forged L2 proof).
+  NotOptimisticPortal selector-collision + forged L2 proof); v2.7.0 added CI (forge tests +
+  catalog validation + README-drift check on every push) and closed the schema gaps it caught.
 - **Fork-simulation (`sim/`):** prove findings against *real deployed targets* on a forked chain.
   4 real incident replays pass against mainnet state — Socket Gateway (approval drain, ~656k USDC),
   Audius (proxy storage collision, ~18.56M AUDIO), DAO Maker (unprotected init, 5.76M DERC), and
@@ -157,4 +195,5 @@ See [`CHANGELOG.md`](CHANGELOG.md) and [`research-log/`](research-log/).
 - **Pattern library:** OWASP SC Top 10 (2026) taxonomy; 370-item Solodit EVM backstop;
   exploit-justified front-line checklist with archetype playbooks.
 - **Next:** point fork-sim at a live in-scope target (RECON → sweep → fork-PROVE); native
-  Solana/Move harnesses for non-EVM targets.
+  Solana/Move harnesses for non-EVM targets; negative fixtures (known-safe contracts the
+  sweep must NOT flag) to measure false-positive rate, not just exploit/fix behavior.

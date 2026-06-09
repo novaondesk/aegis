@@ -28,8 +28,14 @@ contract CoinFlipTest is Test {
         CoinFlip level = new CoinFlip();
         CoinFlipAttacker att = new CoinFlipAttacker(level);
 
+        // Each flip must see a DIFFERENT blockhash or the level's lastHash guard reverts.
+        // Under Foundry 1.7.x, vm.setBlockhash only sticks for spaced, non-sequential
+        // blocks, so roll to bn = 100 + 10*i and pin that block's parent hash. The attacker
+        // reads the very same blockhash source the level does, so the exploit semantics hold.
         for (uint256 i = 0; i < 10; i++) {
-            vm.roll(block.number + 1); // advance a block so blockhash differs (passes lastHash guard)
+            uint256 bn = 100 + i * 10;
+            vm.roll(bn);
+            vm.setBlockhash(bn - 1, keccak256(abi.encode(i + 1)));
             att.predictAndFlip();
         }
 

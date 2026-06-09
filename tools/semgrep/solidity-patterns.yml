@@ -1,0 +1,408 @@
+rules:
+  # ---------------------------------------------------------------------------
+  # Seed rules. These are STARTING POINTS — high recall, low precision by design.
+  # They surface candidates for the human checklist, not confirmed bugs.
+  # Add one new rule per exploit case study (see docs/exploits/_TEMPLATE.md).
+  # Every rule id referenced by a catalog entry's `semgrep:` field MUST exist in
+  # tools/semgrep/ — CI enforces this via tools/validate_catalog.py.
+  # ---------------------------------------------------------------------------
+
+  - id: spot-price-from-pool-reserves
+    languages: [solidity]
+    severity: WARNING
+    message: >
+      Price/value derived from live pool reserves or balanceOf — flash-loan
+      manipulable. Checklist SC03. cf. Inverse Finance ($15.6M).
+    patterns:
+      - pattern-either:
+          - pattern: $POOL.getReserves(...)
+          - pattern: $TOKEN.balanceOf($POOL)
+
+  - id: erc20-transfer-return-unchecked
+    languages: [solidity]
+    severity: WARNING
+    message: >
+      ERC20 transfer/transferFrom return value not checked; non-reverting tokens
+      silently fail. Use SafeERC20. Checklist SC06.
+    patterns:
+      - pattern-either:
+          - pattern: $T.transfer($TO, $AMT);
+          - pattern: $T.transferFrom($FROM, $TO, $AMT);
+
+  - id: external-call-before-state-update
+    languages: [solidity]
+    severity: WARNING
+    message: >
+      Low-level external call — verify Checks-Effects-Interactions (state written
+      BEFORE the call). Checklist SC08. cf. Rari Capital ($80M).
+    patterns:
+      - pattern-either:
+          - pattern: "$A.call{value: $V}($D)"
+          - pattern: $A.call($D)
+
+  - id: tx-origin-auth
+    languages: [solidity]
+    severity: ERROR
+    message: "tx.origin used in a condition — phishing-vulnerable auth. Checklist SC01."
+    patterns:
+      - pattern: tx.origin
+
+  - id: weak-block-randomness
+    languages: [solidity]
+    severity: WARNING
+    message: >
+      block.timestamp/prevrandao/blockhash used as randomness — manipulable.
+      Use Chainlink VRF. Checklist SC09 (insecure-randomness).
+    patterns:
+      - pattern-either:
+          - pattern: block.timestamp
+          - pattern: block.prevrandao
+          - pattern: blockhash(...)
+
+  - id: arbitrary-external-call-target
+    languages: [solidity]
+    severity: WARNING
+    message: >
+      External call to a function-parameter address — arbitrary-call sink.
+      Checklist SC06. cf. Dexible ($2M).
+    patterns:
+      - pattern: |
+          function $F(..., address $TARGET, ...) $VIS {
+            ...
+            $TARGET.call(...);
+            ...
+          }
+
+  # --- promoted from Solodit mining (2026-06-01) ---
+
+  - id: balanceof-self-for-accounting
+    languages: [solidity]
+    severity: WARNING
+    message: >
+      Accounting derived from token.balanceOf(address(this)) — donation-attack
+      surface; use internal accounting. Checklist Vault/SOL-AM-DA-1.
+    patterns:
+      - pattern-either:
+          - pattern: $T.balanceOf(address(this))
+          - pattern: address(this).balance
+
+  - id: ecrecover-result-unvalidated
+    languages: [solidity]
+    severity: WARNING
+    message: >
+      ecrecover result must be checked against address(0) and the expected signer,
+      and the digest must include nonce + chainId for replay safety.
+      Checklist Signatures/SOL-Signature-1..4.
+    patterns:
+      - pattern: ecrecover(...)
+
+  - id: swap-without-min-out-or-deadline
+    languages: [solidity]
+    severity: INFO
+    message: >
+      Swap/router call — confirm a non-zero minAmountOut and a deadline are passed
+      (slippage/MEV protection). Checklist AMM/SOL-Defi-AS-1,2,11.
+    patterns:
+      - pattern-either:
+          - pattern: $R.swapExactTokensForTokens(...)
+          - pattern: $R.exactInput(...)
+          - pattern: $R.exactInputSingle(...)
+
+  # --- Ekubo callback calldata injection pattern (2026-05-05) ---
+
+  - id: calldata-forwarding-in-payment
+    languages: [solidity]
+    severity: WARNING
+    message: >-
+      Payment/settlement function forwards arbitrary calldata to a callback via
+      calldatacopy and verifies only its own balance increase. A malicious callback
+      can use third-party standing approvals to fund repayment, turning the contract
+      into a drain rail. Checklist SC02-CB-1. cf. Ekubo $1.4M (2026-05-05),
+      SwapNet $17M (2026-01-25).
+    pattern-either:
+      - pattern: |
+          function pay(...) external {
+            ...
+            calldatacopy(..., ..., sub(calldatasize(), ...));
+            ...
+            $CALLER.call(...);
+            ...
+            balanceOf(address(...));
+            ...
+          }
+      - pattern: |
+          function settle(...) external {
+            ...
+            calldatacopy(..., ..., sub(calldatasize(), ...));
+            ...
+            $CALLER.call(...);
+            ...
+            balanceOf(address(...));
+            ...
+          }
+
+  # --- catalog v2.0 batch (DeFiHackLabs-mined classes, 2026-06-02) ---
+
+  - id: arbitrary-low-level-call-with-approvals
+    languages: [solidity]
+    severity: ERROR
+    message: >
+      Router/adapter executes a caller-supplied (target, calldata) low-level call
+      from a contract that holds users' standing token approvals — the call can be
+      pointed at the token's transferFrom to drain approvers. Checklist SC05/SC01.
+      cf. Socket Gateway ($3.3M), Seneca ($6.4M).
+    patterns:
+      - pattern-either:
+          - pattern: $TARGET.call($DATA)
+          - pattern: "$TARGET.call{value: $V}($DATA)"
+          - pattern: $TARGET.delegatecall($DATA)
+
+  - id: proxy-sequential-admin-slot
+    languages: [solidity]
+    severity: WARNING
+    message: >
+      Proxy with sequential (non-EIP-1967) storage for admin/implementation —
+      implementation state writes can collide with the proxy's slots and hand over
+      the upgrade path. Checklist SC01. cf. Audius ($6M).
+    patterns:
+      - pattern-either:
+          - pattern: address public admin;
+          - pattern: address public implementation;
+          - pattern: address public proxyAdmin;
+
+  - id: raw-ecrecover-no-nonce
+    languages: [solidity]
+    severity: WARNING
+    message: >
+      ecrecover over a digest with no nonce/chainId/domain separator — signatures
+      are replayable (cross-tx, cross-chain) and malleable (low-s sibling).
+      Use EIP-712 + nonces + OZ ECDSA. Checklist SC01-NONCE.
+    patterns:
+      - pattern: ecrecover($DIGEST, $V, $R, $S)
+
+  - id: missing-access-control
+    languages: [solidity]
+    severity: ERROR
+    message: >
+      Privileged state-changing function (mint/initialize/setOwner/upgradeTo)
+      callable without an access-control modifier — verify onlyOwner/role gate.
+      Checklist SC01. cf. PAID Network ($27M), DAO Maker ($4M).
+    patterns:
+      - pattern-either:
+          - pattern: |
+              function initialize(...) external { ... }
+          - pattern: |
+              function initialize(...) public { ... }
+          - pattern: |
+              function setOwner(...) external { ... }
+          - pattern: |
+              function upgradeTo(...) external { ... }
+
+  - id: credit-requested-not-received
+    languages: [solidity]
+    severity: WARNING
+    message: >
+      Deposit credits the *requested* amount instead of the measured balance delta —
+      fee-on-transfer / deflationary tokens (or a no-transfer path) mint phantom
+      credit. Credit only (balanceAfter - balanceBefore). Checklist SC02.
+    patterns:
+      - pattern: |
+          $T.transferFrom(msg.sender, address(this), $AMT);
+          ...
+          $ACCT[$WHO] += $AMT;
+
+  - id: reward-debt-not-updated
+    languages: [solidity]
+    severity: WARNING
+    message: >
+      MasterChef-style accounting: deposit/withdraw/harvest must resync
+      user.rewardDebt after every amount change, or pending() double-pays.
+      Checklist SC02. Look for paths that change user.amount without rewardDebt.
+    patterns:
+      - pattern-either:
+          - pattern: $U.rewardDebt
+          - pattern: accRewardPerShare
+
+  - id: callback-no-sender-check
+    languages: [solidity]
+    severity: ERROR
+    message: >
+      Flash-loan/swap callback (onFlashLoan / uniswapV2Call / executeOperation /
+      uniswapV3SwapCallback) without a msg.sender == expected-pool check — anyone
+      can invoke it directly with forged parameters. Checklist SC05/SC01.
+    patterns:
+      - pattern-either:
+          - pattern: |
+              function onFlashLoan(...) external { ... }
+          - pattern: |
+              function uniswapV2Call(...) external { ... }
+          - pattern: |
+              function executeOperation(...) external { ... }
+          - pattern: |
+              function uniswapV3SwapCallback(...) external { ... }
+
+  - id: low-level-call-no-code-check
+    languages: [solidity]
+    severity: WARNING
+    message: >
+      Low-level token call without a code-existence check — .call() to an EOA or
+      pre-deploy address returns success, so a bridge/vault credits a deposit that
+      never happened. Use SafeERC20 (checks code.length). Checklist SC02-BRIDGE.
+      cf. Qubit ($80M).
+    patterns:
+      - pattern-either:
+          - pattern: $T.call(abi.encodeWithSelector($SEL, ...))
+          - pattern: $T.call(abi.encodeWithSignature($SIG, ...))
+
+  - id: amm-first-mint-no-minliquidity
+    languages: [solidity]
+    severity: WARNING
+    message: >
+      AMM-pair first mint without a MINIMUM_LIQUIDITY burn (or vault first deposit
+      without a virtual offset) — the first LP can skim later depositors via
+      donation + round-down. Checklist SC07. cf. Uniswap V2's 1000-wei burn.
+    patterns:
+      - pattern-either:
+          - pattern: $SUPPLY == 0
+          - pattern: totalSupply() == 0
+
+  # --- catalog v2.4 batch (wargame-mined classes, 2026-06-04) ---
+
+  - id: state-write-after-external-call
+    languages: [solidity]
+    severity: ERROR
+    message: >
+      Storage written AFTER an external call/ETH send in the same function —
+      classic CEI violation; reenter before the write to repeat the effect.
+      Checklist SC08. cf. The DAO, Rari, Ethernaut BetHouse.
+    patterns:
+      - pattern-either:
+          - pattern: |
+              $A.call{value: $V}($D);
+              ...
+              $SLOT = $VAL;
+          - pattern: |
+              $A.call{value: $V}($D);
+              ...
+              $M[$K] = $VAL;
+
+  - id: unauthenticated-meta-tx-sender
+    languages: [solidity]
+    severity: ERROR
+    message: >
+      Sender identity read from calldata/params (ERC-2771 _msgSender, custom
+      meta-tx 'from' field) without verifying the forwarder is trusted or the
+      signature covers the sender — anyone can impersonate. Checklist SC01.
+      cf. DVD Naive Receiver.
+    patterns:
+      - pattern-either:
+          - pattern: _msgSender()
+          - pattern: trustedForwarder
+          - pattern: msg.data[$A:$B]
+
+  - id: selector-check-fixed-offset
+    languages: [solidity]
+    severity: ERROR
+    message: >
+      Authorization checks a selector read at a FIXED calldata offset, then executes
+      msg.data — ABI offsets are attacker-chosen, so the checked bytes need not be
+      the executed call (ABI smuggling). Parse calldata properly. Checklist SC02.
+      cf. DVD ABI Smuggling, Ethernaut Switch.
+    patterns:
+      - pattern-either:
+          - pattern: calldataload($OFF)
+          - pattern: msg.data[$A:$B]
+
+  - id: balance-equality-control-flow
+    languages: [solidity]
+    severity: WARNING
+    message: >
+      Strict equality / assumption on address(this).balance or balanceOf(this) in
+      control flow — selfdestruct/coinbase/pre-fund can force ether in and wedge or
+      bypass the branch. Compare with >= and use internal accounting.
+      Checklist SC02. cf. Ethernaut Force.
+    patterns:
+      - pattern-either:
+          - pattern: address(this).balance == $X
+          - pattern: $T.balanceOf(address(this)) == $X
+
+  - id: mandatory-push-payment
+    languages: [solidity]
+    severity: WARNING
+    message: >
+      Refund/payout pushed inline (transfer/send/call with required success) inside
+      state-advancing logic — a reverting receiver griefs everyone (king-of-the-hill
+      DoS). Use pull-payments. Checklist SC10. cf. Ethernaut King, Denial.
+    patterns:
+      - pattern-either:
+          - pattern: payable($TO).transfer($AMT);
+          - pattern: require($OK, ...);
+
+  # --- catalog v2.5 batch (Nova May-2026 studies) ---
+
+  - id: unsafe-sub-invariant-critical
+    languages: [solidity]
+    severity: WARNING
+    message: >
+      Unchecked/unsafe subtraction on an invariant-critical quantity (Vyper
+      unsafe_sub, Solidity unchecked block) — underflow wraps to a huge value and
+      corrupts supply/price math. Checklist SC07-UNSAFE. cf. yETH ($11.6M averted).
+    patterns:
+      - pattern-either:
+          - pattern: unchecked { $X = $A - $B; }
+          - pattern: unsafe_sub($A, $B)
+
+  - id: mmr-unconsumed-leaves
+    languages: [solidity]
+    severity: WARNING
+    message: >
+      Merkle/MMR multi-proof verifier must consume EVERY supplied leaf during peak
+      reconstruction — unconsumed leaves (out-of-range k-index) let a forged leaf
+      ride a valid proof. Require leafIter exhaustion. Checklist SC02-PROOF.
+      cf. Hyperbridge ($600k).
+    patterns:
+      - pattern-either:
+          - pattern: verifyProof(...)
+          - pattern: calculateRoot(...)
+
+  # --- catalog v2.6 batch (ZetaChain cross-chain gateway, 2026-04-29) ---
+
+  - id: unauthenticated-cross-chain-call
+    languages: [solidity]
+    severity: ERROR
+    message: >
+      Cross-chain gateway entry (onCall / onReceive / execute reached from the
+      messaging layer) without authenticating the source chain/sender — a forged
+      inbound message drives privileged execution. Checklist SC05/SC01. cf. ZetaChain.
+    patterns:
+      - pattern-either:
+          - pattern: |
+              function onCall(...) external { ... }
+          - pattern: |
+              function onReceive(...) external { ... }
+          - pattern: |
+              function execute(...) external { ... }
+
+  - id: arbitrary-execute-target
+    languages: [solidity]
+    severity: ERROR
+    message: >
+      Gateway/executor forwards caller-or-message-supplied (target, calldata) to a
+      low-level call — combined with standing approvals this is a confused-deputy
+      drain. Constrain the target set. Checklist SC05. cf. ZetaChain GatewayEVM.
+    patterns:
+      - pattern-either:
+          - pattern: $TARGET.call($DATA)
+          - pattern: "$TARGET.call{value: $V}($DATA)"
+
+  - id: standing-approval-risk
+    languages: [solidity]
+    severity: WARNING
+    message: >
+      Contract that pulls via transferFrom / grants unbounded approve holds standing
+      user approvals — any arbitrary-call or confused-deputy path turns it into a
+      drain rail. Pair with arbitrary-execute-target. Checklist SC01/SC05.
+    patterns:
+      - pattern-either:
+          - pattern: $T.approve($SPENDER, type(uint256).max)
+          - pattern: $T.transferFrom($FROM, $TO, $AMT)
