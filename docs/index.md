@@ -27,7 +27,7 @@ catalog, proving each hit with a runnable PoC, then shipping a fix proven by a `
 
 | | |
 |---|---|
-| **[The catalog](the-catalog)** | 36 detectors (31 with runnable PoCs) mined from real incidents + wargames — $292M Kelp, $181M Beanstalk, $128M Balancer, … |
+| **[The catalog](the-catalog)** | <!-- BEGIN GENERATED: docs-catalog-count -->40 detectors (33 with runnable PoCs)<!-- END GENERATED: docs-catalog-count --> mined from real incidents + wargames — $292M Kelp, $181M Beanstalk, $128M Balancer, … |
 | **[PoCs & detectors](pocs)** | A `Vulnerable<X>` + `Safe<X>` + exploit test per detector — the proof, not a vibe |
 | **[Fork-simulation](fork-simulation)** | Exploit the *real deployed target* on a mainnet fork — 4 real incident replays |
 | **[The Ethernaut wargame](wargame)** | Aegis solves OpenZeppelin's CTF **40/40** by the catalog sweep |

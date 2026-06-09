@@ -39,8 +39,14 @@ Every entry is a detector with these fields:
 | `poc` / `poc_cmd` | runnable proof + how to run it |
 | `fork_poc` | (optional) a real mainnet-fork replay |
 
-## All 36 detectors
+<!-- BEGIN GENERATED: docs-catalog-heading -->
+## All 40 detectors
+<!-- END GENERATED: docs-catalog-heading -->
 
+The table below is generated from `catalog/exploits.yaml` by `tools/gen_catalog_table.py`;
+CI fails if it drifts.
+
+<!-- BEGIN GENERATED: docs-catalog-table -->
 | # | Detector (`id`) | Class | Chains | Status |
 |---|---|---|---|---|
 | 1 | [`erc4626-inflation`](pocs#erc4626-inflation) | SC07/SC02 | evm | coded |
@@ -55,9 +61,9 @@ Every entry is a detector with these fields:
 | 10 | [`rhea-finance-slippage`](pocs#rhea-finance-slippage) | SC02/SC07 | near/multi | coded |
 | 11 | [`trustedvolumes-access-control`](pocs#trustedvolumes-access-control) | SC02 | evm | coded |
 | 12 | [`verus-bridge-merkle-forgery`](pocs#verus-bridge-merkle-forgery) | SC02 | evm/multi | coded |
-| 13 | [`thorchain-tss-gg20-key-extraction`](pocs#thorchain-tss-gg20-key-extraction) | X04 | multi | studied |
-| 14 | [`ekubo-callback-approval-drain`](pocs#ekubo-callback-approval-drain) | SC02/SC02-CB | evm | studied |
-| 15 | [`kelp-dao-layerzero-dvn-1-1`](pocs#kelp-dao-layerzero-dvn-1-1) | X01/X01-BRIDGE | ethereum/multi-chain | coded |
+| 13 | `thorchain-tss-gg20-key-extraction` | X04 | multi | studied |
+| 14 | `ekubo-callback-approval-drain` | SC02/SC02-CB | evm | studied |
+| 15 | [`kelp-dao-layerzero-dvn-1-1`](pocs#kelp-dao-layerzero-dvn-1-1) | X01/X01-BRIDGE | evm/multi | coded |
 | 16 | [`ctoken-empty-market-exchange-rate`](pocs#ctoken-empty-market-exchange-rate) | SC07/SC02 | evm | coded |
 | 17 | [`approval-drain-arbitrary-call`](pocs#approval-drain-arbitrary-call) | SC05/SC01 | evm | coded |
 | 18 | [`proxy-storage-collision`](pocs#proxy-storage-collision) | SC01 | evm | coded |
@@ -74,17 +80,23 @@ Every entry is a detector with these fields:
 | 29 | [`calldata-abi-smuggling`](pocs#calldata-abi-smuggling) | SC05/SC01 | evm | coded |
 | 30 | [`forced-ether-balance-assumption`](pocs#forced-ether-balance-assumption) | SC02 | evm | coded |
 | 31 | [`dos-griefing-revert`](pocs#dos-griefing-revert) | SC10/SC02 | evm | coded |
-| 32 | [`ecdsa-nonce-reuse-key-extraction`](pocs#ecdsa-nonce-reuse-key-extraction) | SC01 | evm | coded |
-| 33 | `yearn-yeth-solver-underflow` | SC02/SC07 | evm | studied |
-| 34 | `transit-finance-legacy-approval-drain` | SC02 | evm/tron | studied |
-| 35 | `hyperbridge-mmr-leaf-index` | SC02 | substrate/multi | studied |
+| 32 | `yearn-yeth-solver-underflow` | SC07/SC02 | evm | studied |
+| 33 | `transit-finance-legacy-approval-drain` | SC02/SC02-LEGACY/X05 | tron/evm | studied |
+| 34 | `hyperbridge-mmr-leaf-index` | SC02/SC02-BRIDGE | evm/polkadot | studied |
+| 35 | [`ecdsa-nonce-reuse-key-extraction`](pocs#ecdsa-nonce-reuse-key-extraction) | SC01 | evm | coded |
 | 36 | [`tac-bridge-jetton-impersonation`](pocs#tac-bridge-jetton-impersonation) | SC02 | ton/evm | coded |
+| 37 | [`zeta-chain-gatewayevm`](pocs#zeta-chain-gatewayevm) | SC02/SC05/SC01 | evm/multi | coded |
+| 38 | [`ato-hook-storage-slot-collision`](pocs#ato-hook-storage-slot-collision) | SC-storage-layout | evm | coded |
+| 39 | `drift-oracle-liquidity-manipulation` | SC03/X02/X03 | solana | documented |
+| 40 | `wasabi-protocol-uups-upgrade` | X03 | evm/multi | documented |
+<!-- END GENERATED: docs-catalog-table -->
 
-> Entries 28–31 were mined from the **wargames** (DVD v4 Naive Receiver / ABI Smuggling, Ethernaut
+> Several detectors were mined from the **wargames** (DVD v4 Naive Receiver / ABI Smuggling, Ethernaut
 > Force/King/Denial/Switch) — the loop working as intended: a level solved by a general technique
-> becomes a catalog detector. Entries 32–34 are recent case studies (Yearn yETH solver underflow,
-> Transit Finance legacy-approval drain, Hyperbridge MMR verifier) still in `studied` status — see
-> their write-ups under [`docs/exploits/`](https://github.com/novaondesk/aegis/tree/main/docs/exploits).
+> becomes a catalog detector. `studied` entries (e.g. Yearn yETH solver underflow, Hyperbridge MMR
+> verifier) are full detectors whose PoC is pending; `documented` entries (Drift, Wasabi) are case
+> studies not yet worked into a detector — see their write-ups under
+> [`docs/exploits/`](https://github.com/novaondesk/aegis/tree/main/docs/exploits).
 >
 > See **[PoCs](pocs)** for what each detector catches and its runnable proof. *(EVM model)* entries
 > reproduce a non-EVM incident's broken invariant in Solidity so it runs in the Foundry harness.

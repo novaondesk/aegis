@@ -540,3 +540,35 @@ cd poc && forge test --match-contract JettonImpersonation -vv
 [PoC test](https://github.com/novaondesk/aegis/blob/main/poc/test/JettonImpersonation.t.sol) · [case study](https://github.com/novaondesk/aegis/blob/main/docs/exploits/tac-bridge-jetton-impersonation-2026-05-11.md)
 
 ---
+
+## zeta-chain-gatewayevm
+{: #zeta-chain-gatewayevm }
+
+**Class** SC02/SC05/SC01 · **Chains** evm/multi · **Status** `coded`
+
+ZetaChain GatewayEVM ($334K, 2026-04-29). Three independent defects composed across two chains into a confused-deputy drain: (1) `GatewayZEVM.call()` was unauthenticated — anyone could emit a `Called` event; (2) `GatewayEVM.execute()` on the destination chain accepted arbitrary calldata and ran `target.call(data)`, including `token.transferFrom`; (3) users had granted the gateway unlimited, never-revoked ERC20 approvals. The attacker emitted a crafted `transferFrom` payload, the TSS validators signed it, and the gateway executed it against its own standing approvals — the protocol's infrastructure became the weapon. Fix: authenticate cross-chain messages, allow-list execute targets (reject token contracts), and avoid unlimited approvals to arbitrary-call executors.
+
+**Invariant:** cross-chain messages must be authenticated; gateway execute must validate the target against an allow-list and reject token contracts; users must not grant unlimited approvals to contracts that execute arbitrary calldata
+
+```
+cd poc && forge test --match-contract ZetaGatewayEVM -vv
+```
+[PoC test](https://github.com/novaondesk/aegis/blob/main/poc/test/ZetaGatewayEVM.t.sol) · [case study](https://github.com/novaondesk/aegis/blob/main/docs/exploits/zeta-chain-gatewayevm-2026-04-29.md)
+
+---
+
+## ato-hook-storage-slot-collision
+{: #ato-hook-storage-slot-collision }
+
+**Class** SC-storage-layout · **Chains** evm · **Status** `coded`
+
+ATO Hook ($14.4K, 2026-06-07). A rewards `mapping(address => uint256)` entry collided with Solady's fixed `_REENTRANCY_GUARD_SLOT`: the attacker deployed a contract at a CREATE2 address where `keccak256(addr, baseSlot)` equals the guard slot. Every `getReward()` call writes the reentrancy sentinel into that slot — which is also the attacker's reward balance — inflating it; repeated calls drained ~14.4 ETH. A named refinement of SC01 (storage-slot collision) that no static analyzer catches without computing mapping-slot addresses against library-reserved slots. Fix: never let an attacker-influenceable mapping entry share a slot with a security primitive's reserved slot (namespaced/ERC-7201 storage).
+
+**Invariant:** no attacker-influenceable mapping entry may share a storage slot with a security primitive's reserved slot
+
+```
+cd poc && forge test --match-contract StorageSlotCollisionAtoHook -vv
+```
+[PoC test](https://github.com/novaondesk/aegis/blob/main/poc/test/StorageSlotCollisionAtoHook.t.sol) · [case study](https://github.com/novaondesk/aegis/blob/main/docs/exploits/ato-hook-storage-slot-collision-2026-06-07.md)
+
+---

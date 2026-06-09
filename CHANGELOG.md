@@ -15,9 +15,9 @@ review of the published repo.
 - **`tools/validate_catalog.py`** — enforces the catalog schema as a contract: required fields,
   `status: coded` ⇔ `poc`/`poc_cmd` set + file exists (and the inverse for `studied`), `doc`/`fork_poc`
   repo paths resolve, and `class`/`checklist`/`semgrep` ids resolve to their source files.
-- **`tools/gen_catalog_table.py`** — generates the README catalog table + counts from
-  `exploits.yaml` (single source of truth); `--check` fails CI on drift. README counts are no longer
-  hand-maintained.
+- **`tools/gen_catalog_table.py`** — generates the catalog table + counts from `exploits.yaml`
+  (single source of truth) into the README **and the docs site** (`docs/the-catalog.md` table +
+  heading, `docs/index.md` count); `--check` fails CI on drift. No page hand-maintains counts now.
 - **`LICENSE`** (MIT) at the repo root, matching the skills' declared license.
 - **PoC fidelity discipline** in `aegis-audit`: findings backed only by an EVM-model PoC for a
   non-EVM target must be labelled *illustrative of the class, not a faithful repro* — a native

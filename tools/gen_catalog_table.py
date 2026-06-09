@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
-"""Generate the README catalog table + counts from catalog/exploits.yaml.
+"""Generate the catalog table + counts from catalog/exploits.yaml.
 
-The README must never hand-maintain catalog numbers — they drift. This script
-rewrites the blocks between the GENERATED markers in README.md from the catalog
-(the single source of truth). CI runs --check to fail on drift.
+No page should hand-maintain catalog numbers — they drift. This script rewrites the
+blocks between the GENERATED markers, from the catalog (the single source of truth), in:
+  - README.md            (the exploit table + counts)
+  - docs/the-catalog.md  (the numbered detector table + heading, for the docs site)
+  - docs/index.md        (the catalog count cell)
+CI runs --check to fail on drift in any of them.
 
 Usage (from repo root):
   python3 tools/gen_catalog_table.py          # rewrite README.md in place
@@ -18,6 +21,8 @@ import yaml
 
 ROOT = Path(__file__).resolve().parent.parent
 README = ROOT / "README.md"
+DOCS_CATALOG = ROOT / "docs" / "the-catalog.md"
+DOCS_INDEX = ROOT / "docs" / "index.md"
 CATALOG = ROOT / "catalog" / "exploits.yaml"
 
 CHAIN_NAMES = {
@@ -71,31 +76,69 @@ def render(entries):
     return counts, "\n".join(rows)
 
 
-def splice(text, marker, payload):
+def render_docs(entries):
+    """The numbered detector table for the docs site (the-catalog.md) + index count cell."""
+    coded = sum(1 for e in entries if e["status"] == "coded")
+
+    heading = f"## All {len(entries)} detectors"
+
+    rows = ["| # | Detector (`id`) | Class | Chains | Status |", "|---|---|---|---|---|"]
+    for i, e in enumerate(entries, 1):
+        eid = e["id"]
+        # only coded entries have a PoC section to anchor-link to in pocs.md
+        idcell = f"[`{eid}`](pocs#{eid})" if e["status"] == "coded" else f"`{eid}`"
+        cls = "/".join(e.get("class") or [])
+        chains = "/".join(e.get("chains") or [])
+        rows.append(f"| {i} | {idcell} | {cls} | {chains} | {e['status']} |")
+
+    index_count = f"{len(entries)} detectors ({coded} with runnable PoCs)"
+    return heading, "\n".join(rows), index_count
+
+
+def splice(text, marker, payload, where, inline=False):
     begin, end = f"<!-- BEGIN GENERATED: {marker} -->", f"<!-- END GENERATED: {marker} -->"
     pattern = re.compile(re.escape(begin) + r".*?" + re.escape(end), re.S)
     if not pattern.search(text):
-        sys.exit(f"README.md is missing the {begin} / {end} markers")
-    return pattern.sub(f"{begin}\n{payload}\n{end}", text)
+        sys.exit(f"{where} is missing the {begin} / {end} markers")
+    # inline form keeps everything on one line (e.g. inside a markdown table cell)
+    joined = f"{begin}{payload}{end}" if inline else f"{begin}\n{payload}\n{end}"
+    return pattern.sub(lambda _: joined, text)
 
 
 def main():
     entries = yaml.safe_load(CATALOG.read_text(encoding="utf-8"))["exploits"]
     counts, table = render(entries)
+    docs_heading, docs_table, index_count = render_docs(entries)
 
-    old = README.read_text(encoding="utf-8")
-    new = splice(old, "catalog-counts", counts)
-    new = splice(new, "catalog-table", table)
+    # (path, [(marker, payload, inline), ...]) — every generated block across repo + docs site
+    targets = [
+        (README, [("catalog-counts", counts, False), ("catalog-table", table, False)]),
+        (DOCS_CATALOG, [("docs-catalog-heading", docs_heading, False),
+                        ("docs-catalog-table", docs_table, False)]),
+        (DOCS_INDEX, [("docs-catalog-count", index_count, True)]),
+    ]
 
-    if "--check" in sys.argv:
-        if new != old:
-            print("README.md catalog table/counts are out of date — run:  python3 tools/gen_catalog_table.py", file=sys.stderr)
+    check = "--check" in sys.argv
+    drift = False
+    for path, blocks in targets:
+        old = path.read_text(encoding="utf-8")
+        new = old
+        for marker, payload, inline in blocks:
+            new = splice(new, marker, payload, path.name, inline=inline)
+        if check:
+            if new != old:
+                print(f"{path.relative_to(ROOT)} is out of date — run: python3 tools/gen_catalog_table.py", file=sys.stderr)
+                drift = True
+        else:
+            path.write_text(new, encoding="utf-8")
+
+    if check:
+        if drift:
             return 1
-        print("README.md catalog table/counts are in sync with catalog/exploits.yaml")
+        print("README + docs site catalog tables/counts are in sync with catalog/exploits.yaml")
         return 0
 
-    README.write_text(new, encoding="utf-8")
-    print(f"README.md regenerated: {counts}")
+    print(f"Regenerated README + docs site: {counts}")
     return 0
 
 
